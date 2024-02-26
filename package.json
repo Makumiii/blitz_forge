@@ -1,0 +1,45 @@
+{
+  "name": "blitz_forge",
+  "version": "1.0.0",
+  "description": "A scaffolding tool for Node.js and TypeScript React projects. Get started quickly with TypeScript configurations for Node.js and React, including Tailwind CSS for React projects. Customize project structures with ease using a JSON configuration file. Streamline your development workflow and unleash your productivity🚀",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon",
+    "build": "tsc -p . --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Makumiii/blitz_forge.git"
+  },
+  "keywords": [
+    "scaffolder",
+    "typescript",
+    "javascript",
+    "js",
+    "ts",
+    "react",
+    "tsx",
+    "tailwind-css",
+    "productivity",
+    "scaffolding"
+  ],
+  "author": "Makumi J",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Makumiii/blitz_forge/issues"
+  },
+  "homepage": "https://github.com/Makumiii/blitz_forge#readme",
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "commander": "^12.0.0",
+    "enquirer": "^2.4.1",
+    "typescript": "^5.3.3"
+  },
+  "devDependencies": {
+    "@types/commander": "^2.12.2",
+    "@types/node": "^20.11.20",
+    "nodemon": "^3.1.0",
+    "ts-node": "^10.9.2"
+  }
+}
