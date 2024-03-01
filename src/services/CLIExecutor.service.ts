@@ -101,43 +101,66 @@ class CLIExecutor{
 
     }
 
-    public async buildProject(chosenProject:Project):Promise<void>{
-
-        const npm = chosenProject !== "react" ? 'npm init -y' : null;
-        if(npm !== null){
-
-            exec(npm,(error, stdout, stderr)=>{
-                const message = 'could not execute command';
-                if(error){
-                    console.error(message, error);
-                }
-                if(stderr){
-                    console.error(message, stderr);
-                }
-            })
+    static async executeCommands(command:string | string[]):Promise<void>{
+        let commandsStore: string[] = [];
+        if(typeof command === "string"){
+            commandsStore.push(command as string)
         }
+        commandsStore = commandsStore.concat(command as string[])
+
+        for(const command of commandsStore){
+
+            await new Promise<void>((resolve, reject)=>{
+
+                exec(command,(error, stdout, stderr) =>{
+                    const message = 'an error occurred during command execution';
+                    if(stderr || error){
+                        console.error(message,error);
+                        reject(error || stderr)
+                    }
+
+                    resolve()
+
+
+                } )
+
+            })
+
+
+        }
+        return
+
+    }
+
+    public async buildProject(chosenProject:Project):Promise<void>{
         interface commands{
             normalInstall:string,
             devInstall:string,
             viteInstall:string[]
         }
-
+        const npm = chosenProject !== "react" ? 'npm init -y' : null;
         const commands : commands = {
             normalInstall:'npm install',
             devInstall:'npm install -D',
             viteInstall:[`vite create ${this.projectName} --template react`, `cd ${this.projectName}`]
         } as const;
+        if(chosenProject === "react"){
+            CLIExecutor.executeCommands(commands.viteInstall);
+            return
+        }
+        const commandsToExecute = packagesToInstall[chosenProject];
+        CLIExecutor.executeCommands([npm as string, ...commandsToExecute]);
+        return;
+    }
 
-        packagesToInstall[chosenProject].forEach((pckg)=>{
-            const command = pckg.includes('-D') ? commands.devInstall : commands.normalInstall;
+    public async buildProjectFolder():Promise<void>{
+        console.log('command invoked')
 
-            exec(command)
+        const command = `mkdir ${this.projectName}`;
+        const navigateIntoDirCommand = `cd ${this.projectName}`
+        await CLIExecutor.executeCommands([command, navigateIntoDirCommand]);
 
-        })
-
-
-
-
+        console.log('finished');
 
     }
 }
