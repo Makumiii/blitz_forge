@@ -2,6 +2,7 @@ import select, {Separator} from '@inquirer/select'
 import * as path from "node:path";
 import * as fs from "fs";
 import {exec} from "node:child_process";
+import {write} from "node:fs";
 
 type Temps = 'ts' | 'tailwind' | 'eslint' | 'nodemon' | 'postcss';
 type Project = 'react' | 'node' | 'webServer' | 'CLIApp';
@@ -102,65 +103,128 @@ class CLIExecutor{
     }
 
     static async executeCommands(command:string | string[]):Promise<void>{
-        let commandsStore: string[] = [];
-        if(typeof command === "string"){
-            commandsStore.push(command as string)
+        try{
+            let commandsStore: string[] = [];
+            if(typeof command === "string"){
+                commandsStore.push(command as string)
+            }
+            commandsStore = commandsStore.concat(command as string[])
+
+            for(const command of commandsStore){
+
+                await new Promise<void>((resolve, reject)=>{
+
+                    exec(command,(error, stdout, stderr) =>{
+                        const message = 'an error occurred during command execution';
+                        if(stderr || error){
+                            console.error(message,error);
+                            reject(error || stderr)
+                        }
+
+                        resolve()
+
+
+                    } )
+
+                })
+
+
+            }
+            return
         }
-        commandsStore = commandsStore.concat(command as string[])
-
-        for(const command of commandsStore){
-
-            await new Promise<void>((resolve, reject)=>{
-
-                exec(command,(error, stdout, stderr) =>{
-                    const message = 'an error occurred during command execution';
-                    if(stderr || error){
-                        console.error(message,error);
-                        reject(error || stderr)
-                    }
-
-                    resolve()
-
-
-                } )
-
-            })
-
-
+        catch(err){
+            const message = 'an error occurred while executing specified commands';
+            console.error(message, err);
         }
-        return
+
+
 
     }
 
     public async buildProject(chosenProject:Project):Promise<void>{
-        interface commands{
-            normalInstall:string,
-            devInstall:string,
-            viteInstall:string[]
+        try{
+            interface commands{
+                normalInstall:string,
+                devInstall:string,
+                viteInstall:string[]
+            }
+            const npm = chosenProject !== "react" ? 'npm init -y' : null;
+            const commands : commands = {
+                normalInstall:'npm install',
+                devInstall:'npm install -D',
+                viteInstall:[`vite create ${this.projectName} --template react`, `cd ${this.projectName}`]
+            } as const;
+            if(chosenProject === "react"){
+                CLIExecutor.executeCommands(commands.viteInstall);
+                return
+            }
+            const commandsToExecute = packagesToInstall[chosenProject];
+            CLIExecutor.executeCommands([npm as string, ...commandsToExecute]);
+            return;
+
         }
-        const npm = chosenProject !== "react" ? 'npm init -y' : null;
-        const commands : commands = {
-            normalInstall:'npm install',
-            devInstall:'npm install -D',
-            viteInstall:[`vite create ${this.projectName} --template react`, `cd ${this.projectName}`]
-        } as const;
-        if(chosenProject === "react"){
-            CLIExecutor.executeCommands(commands.viteInstall);
-            return
+        catch(err){
+            const message = 'an error occurred while executing commands';
+            console.error(message, err);
+            return;
         }
-        const commandsToExecute = packagesToInstall[chosenProject];
-        CLIExecutor.executeCommands([npm as string, ...commandsToExecute]);
-        return;
+
     }
 
     public async buildProjectFolder():Promise<void>{
-        console.log('command invoked')
+        try{
 
-        const command = `mkdir ${this.projectName}`;
-        const navigateIntoDirCommand = `cd ${this.projectName}`
-        await CLIExecutor.executeCommands([command, navigateIntoDirCommand]);
+            console.log('command invoked')
+            const command = `mkdir ${this.projectName}`;
+            CLIExecutor.executeCommands(command);
+            console.log('finished');
 
-        console.log('finished');
+        }
+        catch(err){
+            const message = 'an error occurred while building project';
+            console.error(message, err);
+        }
+
+    }
+
+    public async readTemplateConfigs(config:Temps , folder:'custom' | 'default'):Promise<string | null>{
+        try{
+            const extName = configsExt[config].ext;
+            const tempLocation = path.resolve(__dirname, '..', 'temps' , folder, `${config}.${extName}`);
+            return await fs.promises.readFile(tempLocation, {encoding:"utf-8"});
+
+        }
+        catch(err){
+            const message = 'an error occurred while reading template configs';
+            console.error(message, err);
+            return null;
+
+        }
+    }
+
+    public async writeConfigsIntoProject (data:string,writeDestination?: string):Promise<void>{
+        try{
+            const dflt = process.cwd();
+            const destination = writeDestination === undefined ? dflt : writeDestination;
+            await fs.promises.writeFile(destination, data , {encoding:'utf-8'} );
+
+        }
+        catch(err){
+            const message = 'an error occurred while writing configs into project';
+            console.error(message,err);
+        }
+    }
+
+    public async quickTree(item:string | string[],target:string ):Promise<void>{
+
+        try{
+
+        }
+        catch(err){
+            const message = 'an error occurred while making quickTree';
+            console.error(message, err);
+        }
+
 
     }
 }
