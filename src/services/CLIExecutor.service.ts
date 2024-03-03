@@ -218,6 +218,19 @@ class CLIExecutor{
     public async quickTree(item:string | string[],target:string ):Promise<void>{
 
         try{
+            let itemsStore :string[] = [];
+            if(typeof item === "string"){
+                itemsStore.push(item)
+            }else{
+                itemsStore = [...item]
+            }
+            const command = 'mkdir '
+
+            for(const item of itemsStore){
+                await CLIExecutor.executeCommands(`mkdir ${item}`)
+            }
+
+
 
         }
         catch(err){
