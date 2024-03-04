@@ -32,6 +32,8 @@ const packagesToInstall : {[key in Project]:string[]} = {
 } as const
 
 
+
+
 interface Response<T> {
     success:boolean,
     data?:T
@@ -42,7 +44,9 @@ interface Executables{
 
 
 class CLIExecutor{
-    constructor(private projectName:string) {
+    private projectSrcPath : string;
+    constructor(private projectName:string){
+        this.projectSrcPath = path.resolve(`${projectName}`, 'src')
     }
     public async setUp():Promise<void>{
         try{
@@ -155,11 +159,11 @@ class CLIExecutor{
                 viteInstall:[`vite create ${this.projectName} --template react`, `cd ${this.projectName}`]
             } as const;
             if(chosenProject === "react"){
-                CLIExecutor.executeCommands(commands.viteInstall);
+                await CLIExecutor.executeCommands(commands.viteInstall);
                 return
             }
             const commandsToExecute = packagesToInstall[chosenProject];
-            CLIExecutor.executeCommands([npm as string, ...commandsToExecute]);
+            await CLIExecutor.executeCommands([npm as string, ...commandsToExecute]);
             return;
 
         }
@@ -173,10 +177,8 @@ class CLIExecutor{
 
     public async buildProjectFolder():Promise<void>{
         try{
-
-            console.log('command invoked')
-            const command = `mkdir ${this.projectName}`;
-            CLIExecutor.executeCommands(command);
+            const pathToUse = process.cwd();
+            await fs.promises.mkdir(pathToUse, {recursive:false});
             console.log('finished');
 
         }
@@ -208,6 +210,7 @@ class CLIExecutor{
             const destination = writeDestination === undefined ? dflt : writeDestination;
             await fs.promises.writeFile(destination, data , {encoding:'utf-8'} );
 
+
         }
         catch(err){
             const message = 'an error occurred while writing configs into project';
@@ -215,14 +218,23 @@ class CLIExecutor{
         }
     }
 
-    public async quickTree(item:string | string[],target:string ):Promise<void>{
+    public async quickTree(item:string | string[],flag:'dir' | 'file'):Promise<void>{
 
         try{
             let itemsStore :string[] = typeof item === 'string' ? [item] : [...item];
-            const command = 'mkdir';
             for(const item of itemsStore){
-                await CLIExecutor.executeCommands(`mkdir ${item}`)
+                const pathToUse = path.resolve(this.projectSrcPath, item);
+                if(flag === "dir"){
+
+                    await fs.promises.mkdir(pathToUse, {recursive:false});
+
+                }
+                if(flag === 'file'){
+                    await fs.promises.writeFile(pathToUse, '', {encoding:'utf-8'});
+
+                }
             }
+            console.log('making quick tree is a success');
         }
         catch(err){
             const message = 'an error occurred while making quickTree';
@@ -231,6 +243,8 @@ class CLIExecutor{
 
 
     }
+
+
 }
 
 export default CLIExecutor
