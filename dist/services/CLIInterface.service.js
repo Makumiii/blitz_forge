@@ -1,3 +1,4 @@
+"use strict";
 // import {Separator, input} from '@inquirer/prompts';
 // import * as packageJson from 'package.json';
 // class CLIInterface{
@@ -10,4 +11,4 @@
 //         console.log(welcomeBanner);
 //     }
 //
-//
+// }
