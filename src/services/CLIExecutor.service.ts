@@ -2,7 +2,6 @@ import select, {Separator} from '@inquirer/select'
 import * as path from "node:path";
 import * as fs from "fs";
 import {exec} from "node:child_process";
-import {write} from "node:fs";
 
 type Temps = 'ts' | 'tailwind' | 'eslint' | 'nodemon' | 'postcss';
 type Project = 'react' | 'node' | 'webServer' | 'CLIApp';
@@ -41,6 +40,9 @@ interface Response<T> {
 interface Executables{
     [type:string]:string[]
 };
+
+type todos = 'critical' | 'highPriority' | 'medium' | 'low' | 'optional';
+
 
 
 class CLIExecutor{
@@ -218,18 +220,18 @@ class CLIExecutor{
         }
     }
 
-    public async quickTree(item:string | string[],flag:'dir' | 'file'):Promise<void>{
+    public async quickTree(item:string | string[],fileType:'dir' | 'file'):Promise<void>{
 
         try{
             let itemsStore :string[] = typeof item === 'string' ? [item] : [...item];
             for(const item of itemsStore){
                 const pathToUse = path.resolve(this.projectSrcPath, item);
-                if(flag === "dir"){
+                if(fileType === "dir"){
 
                     await fs.promises.mkdir(pathToUse, {recursive:false});
 
                 }
-                if(flag === 'file'){
+                if(fileType === 'file'){
                     await fs.promises.writeFile(pathToUse, '', {encoding:'utf-8'});
 
                 }
@@ -240,6 +242,19 @@ class CLIExecutor{
             const message = 'an error occurred while making quickTree';
             console.error(message, err);
         }
+
+
+    }
+    public async getTodo():Promise<string[] | null>{
+        try{
+            const projectFilesDir = 'src';
+
+
+        }
+        catch(err){
+            const message = 'an error occurred while getting todos from files';
+            console.error(message,err)};
+        return null;
 
 
     }
