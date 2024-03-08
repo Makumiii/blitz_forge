@@ -1,5 +1,6 @@
 import * as fs from "fs";
 import * as path from "node:path";
+import * as EventEmitter from "node:events";
 
 /*
 ->make changes to the method
@@ -14,6 +15,9 @@ class taskTracker{
     public store:string[];
     public bulletsSignatureRegex:RegExp;
     public codeBaseLocation:string;
+    readonly tasksPermanentStoreLocation:string;
+    readonly storeTasksEvent:EventEmitter;
+
     constructor(){
         this.cwd = process.cwd();
         this.commentSignatureRegex = /^(\/\*)((->).*)+(\*\/)$/;
@@ -21,6 +25,9 @@ class taskTracker{
         // this.supportedFiles = ['.ts', '.tsx', '.js', '.jsx'];
         this.store = [];
         this.codeBaseLocation = path.resolve(this.cwd, 'src');
+        this.tasksPermanentStoreLocation = path.resolve(__dirname,'..', '..', 'user.store.json' );
+        this.storeTasksEvent = new EventEmitter().on('storeTasks',taskTracker.storeTasksHandler );
+
 
     }
 
@@ -41,7 +48,7 @@ class taskTracker{
         }
     }
 
-    static async writeOperations(writePath:string,data:string, options?:{stream:boolean}):Promise<void | fs.WriteStream>{
+    static async writeOperations(writePath:string,data:any, options?:{stream:boolean}):Promise<void | fs.WriteStream>{
         try{
             const streamable = options?.stream === true;
             if(!streamable){
@@ -74,7 +81,7 @@ class taskTracker{
     }
 
 
-    public async getTodos(entryLocation?:string):Promise<void>{
+    public async getTasks(entryLocation?:string):Promise<void>{
         try{
 
             const entryPointToUse = entryLocation === undefined ? this.codeBaseLocation : entryLocation;
@@ -94,7 +101,7 @@ class taskTracker{
                         }
                     }
                 }else if((await fs.promises.stat(contentPath)).isDirectory()){
-                    await this.getTodos(contentPath);
+                    await this.getTasks(contentPath);
                 }else{
 
                     throw new Error(`an unexpected exception occurred. Item is neither a dir or file or is corrupted: ${contentPath}`);
@@ -102,13 +109,39 @@ class taskTracker{
 
 
             }
+            this.storeTasksEvent.emit('storeTasks');
+
+
 
         }
         catch(err){
-            const message = 'an error occurred while getting todos from src files';
+            const message = 'an error occurred while getting tasks from src files';
             console.error(message, err);
         }
     };
+
+    private async storeTasksHandler():Promise<{success:boolean}>{
+
+        try{
+            interface StoreStructure{
+                data:string[];
+                dataItems:number;
+                lastModified:Date;
+                created:Date;
+            }
+
+            const content = JSON.parse(await taskTracker.readOperations(this.tasksPermanentStoreLocation, {stream:false}) as string) as StoreStructure;
+            content.dataItems.push(this.store);
+            await taskTracker.writeOperations(this.tasksPermanentStoreLocation, content, {stream:false});
+            return {success:true};
+        }
+        catch(err){
+            const message = 'an error occurred while storing tasks';
+            console.error(message, err);
+            return {success:false}
+
+        }
+    }
 
 
 
