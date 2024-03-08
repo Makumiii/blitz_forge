@@ -1,19 +1,26 @@
 import * as fs from "fs";
 import * as path from "node:path";
 
+/*
+->make changes to the method
+
+*/
+
 
 class taskTracker{
     public cwd:string;
     public commentSignatureRegex:RegExp;
-    public supportedFiles:string[];
+    // public supportedFiles:string[];
     public store:string[];
-    public bulletsSignatureRegex:RegExp
+    public bulletsSignatureRegex:RegExp;
+    public codeBaseLocation:string;
     constructor(){
         this.cwd = process.cwd();
         this.commentSignatureRegex = /^(\/\*)((->).*)+(\*\/)$/;
         this.bulletsSignatureRegex = /^((->).*)+$/
-        this.supportedFiles = ['.ts', '.tsx', '.js', '.jsx'];
+        // this.supportedFiles = ['.ts', '.tsx', '.js', '.jsx'];
         this.store = [];
+        this.codeBaseLocation = path.resolve(this.cwd, 'src');
 
     }
 
@@ -34,7 +41,7 @@ class taskTracker{
         }
     }
 
-    public async writeOperations(writePath:string,data:string, options?:{stream:boolean}):Promise<void | fs.WriteStream>{
+    static async writeOperations(writePath:string,data:string, options?:{stream:boolean}):Promise<void | fs.WriteStream>{
         try{
             const streamable = options?.stream === true;
             if(!streamable){
@@ -42,8 +49,6 @@ class taskTracker{
                 return;
             }
             return fs.createWriteStream(writePath,{encoding:"utf-8"});
-
-
         }
         catch(err){
             const message = 'an error occurred while performing write operation';
@@ -59,8 +64,6 @@ class taskTracker{
                 return {done:true};
             })
             return {done:false};
-
-
         }
         catch(err){
             const message = 'an error occurred while piping stream';
@@ -69,23 +72,32 @@ class taskTracker{
         }
 
     }
-    public async getTodos(projectRootPath:string):Promise<void>{
+
+
+    public async getTodos(entryLocation?:string):Promise<void>{
         try{
-            const srcPath = path.resolve(projectRootPath, 'src');
-            const srcContents = await fs.promises.readdir(srcPath, {encoding:"utf-8"});
+
+            const entryPointToUse = entryLocation === undefined ? this.codeBaseLocation : entryLocation;
+            const srcContents = await fs.promises.readdir(entryPointToUse, {encoding:"utf-8"});
 
             for(const content of srcContents){
-                const contentPath = path.resolve(srcPath, content);
+                const contentPath = path.resolve(entryPointToUse, content);
                 const contentType = (await fs.promises.stat(contentPath)).isDirectory()
-                if(await new taskTracker().isSupportedFile(contentPath)){
+                if(await taskTracker.isSupportedFile(contentPath)){
                     const fileContent = await taskTracker.readOperations(contentPath, {stream:false}) as string;
-                    const match = this.commentSignatureRegex.exec(fileContent);
+                    const match:RegExpExecArray | null = this.commentSignatureRegex.exec(fileContent);
                     if(match !== null){
                         const matchString = match[0];
+                        const todoItemsMatch:RegExpMatchArray | null = matchString.match(this.bulletsSignatureRegex)
+                        if(todoItemsMatch !== null){
+                            this.store.push(...todoItemsMatch);
+                        }
                     }
+                }else if((await fs.promises.stat(contentPath)).isDirectory()){
+                    await this.getTodos(contentPath);
+                }else{
 
-
-
+                    throw new Error(`an unexpected exception occurred. Item is neither a dir or file or is corrupted: ${contentPath}`);
                 }
 
 
@@ -96,14 +108,17 @@ class taskTracker{
             const message = 'an error occurred while getting todos from src files';
             console.error(message, err);
         }
-    }
+    };
 
-    private async isSupportedFile(filePath:string):Promise<boolean>{
+
+
+    static async isSupportedFile(filePath:string):Promise<boolean>{
         try{
+            const supportedFiles = ['.ts', '.tsx', '.js', '.jsx'];
             const file = await fs.promises.stat(filePath);
             const isFile = file.isFile();
             const extName = path.extname(filePath);
-            return this.supportedFiles.includes(extName) && isFile;
+            return supportedFiles.includes(extName) && isFile;
 
         }
         catch(err){
