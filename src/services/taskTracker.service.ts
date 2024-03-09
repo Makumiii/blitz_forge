@@ -2,6 +2,12 @@ import * as fs from "fs";
 import * as path from "node:path";
 import * as EventEmitter from "node:events";
 
+interface StoreStructure{
+    data:string[];
+    lastModified:Date | null;
+    created:Date | null;
+}
+
 /*
 ->make changes to the user balance regex
 ->add a method to follow other users
@@ -82,7 +88,7 @@ class taskTracker{
     }
 
 
-    public async getTasks(entryLocation?:string):Promise<void>{
+    public async searchTasksInCB(entryLocation?:string):Promise<void>{
         try{
 
             const entryPointToUse = entryLocation === undefined ? this.codeBaseLocation : entryLocation;
@@ -93,16 +99,16 @@ class taskTracker{
                 const contentType = (await fs.promises.stat(contentPath)).isDirectory()
                 if(await taskTracker.isSupportedFile(contentPath)){
                     const fileContent = await taskTracker.readOperations(contentPath, {stream:false}) as string;
-                    const match:RegExpExecArray | null = this.commentSignatureRegex.exec(fileContent);
-                    if(match !== null){
-                        const matchString = match[0];
+                    const firstFoundMatch:RegExpExecArray | null = this.commentSignatureRegex.exec(fileContent);
+                    if(firstFoundMatch !== null){
+                        const matchString = firstFoundMatch[0];
                         const todoItemsMatch:RegExpMatchArray | null = matchString.match(this.bulletsSignatureRegex)
                         if(todoItemsMatch !== null){
                             this.store.push(...todoItemsMatch);
                         }
                     }
                 }else if((await fs.promises.stat(contentPath)).isDirectory()){
-                    await this.getTasks(contentPath);
+                    await this.searchTasksInCB(contentPath);
                 }else{
 
                     throw new Error(`an unexpected exception occurred. Item is neither a dir or file or is corrupted: ${contentPath}`);
@@ -120,11 +126,7 @@ class taskTracker{
     private async storeTasksHandler():Promise<{success:boolean}>{
 
         try{
-            interface StoreStructure{
-                data:string[];
-                lastModified:Date | null;
-                created:Date | null;
-            }
+
 
             const content = JSON.parse(await taskTracker.readOperations(this.tasksPermanentStoreLocation, {stream:false}) as string) as StoreStructure;
             content.data.push(...this.store);
@@ -164,6 +166,19 @@ class taskTracker{
 
         }
 
+    }
+
+    private async getTasksToDisplay():Promise<string[] | null>{
+        try{
+            const storeContent = await taskTracker.readOperations(this.tasksPermanentStoreLocation, {stream:false}) as string;
+            const tasksArray = JSON.parse(storeContent) as StoreStructure;
+            return tasksArray.data;
+        }
+        catch(err){
+            const message = 'an error occurred while displaying tasks';
+            console.error(message, err);
+            return null;
+        }
     }
 
 
