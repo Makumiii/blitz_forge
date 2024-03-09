@@ -3,8 +3,9 @@ import * as path from "node:path";
 import * as EventEmitter from "node:events";
 
 /*
-->make changes to the method
-
+->make changes to the user balance regex
+->add a method to follow other users
+->refactor class properties
 */
 
 
@@ -20,13 +21,13 @@ class taskTracker{
 
     constructor(){
         this.cwd = process.cwd();
-        this.commentSignatureRegex = /^(\/\*)((->).*)+(\*\/)$/;
-        this.bulletsSignatureRegex = /^((->).*)+$/
+        this.commentSignatureRegex = /^(\/\*)(\s)?((->)\s?\S*)+\2?(\*\/)$/gm;
+        this.bulletsSignatureRegex = /^((->)\s?\S*)$/gm
         // this.supportedFiles = ['.ts', '.tsx', '.js', '.jsx'];
         this.store = [];
         this.codeBaseLocation = path.resolve(this.cwd, 'src');
         this.tasksPermanentStoreLocation = path.resolve(__dirname,'..', '..', 'user.store.json' );
-        this.storeTasksEvent = new EventEmitter().on('storeTasks',taskTracker.storeTasksHandler );
+        this.storeTasksEvent = new EventEmitter().on('storeTasks',this.storeTasksHandler );
 
 
     }
@@ -110,28 +111,30 @@ class taskTracker{
 
             }
             this.storeTasksEvent.emit('storeTasks');
-
-
-
         }
         catch(err){
             const message = 'an error occurred while getting tasks from src files';
             console.error(message, err);
         }
     };
-
     private async storeTasksHandler():Promise<{success:boolean}>{
 
         try{
             interface StoreStructure{
                 data:string[];
-                dataItems:number;
-                lastModified:Date;
-                created:Date;
+                lastModified:Date | null;
+                created:Date | null;
             }
 
             const content = JSON.parse(await taskTracker.readOperations(this.tasksPermanentStoreLocation, {stream:false}) as string) as StoreStructure;
-            content.dataItems.push(this.store);
+            content.data.push(...this.store);
+            const initiallyCreated = content.created !== null;
+            if(!initiallyCreated){
+                content.created = new Date();
+            }
+
+            content.lastModified = new Date();
+
             await taskTracker.writeOperations(this.tasksPermanentStoreLocation, content, {stream:false});
             return {success:true};
         }
