@@ -1,4 +1,27 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -9,10 +32,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const select_1 = require("@inquirer/select");
-const path = require("node:path");
-const fs = require("fs");
+const path = __importStar(require("node:path"));
+const fs = __importStar(require("fs"));
 const node_child_process_1 = require("node:child_process");
+const projectTypes = ["react", "node", "cli", "webserver"];
 const mvc = ['models', 'controllers', 'views'];
 const layered = ['controllers', 'models', 'services'];
 ;
@@ -25,10 +48,10 @@ const configsExt = {
 };
 const commonInstallationPackages = ['typescript'];
 const packagesToInstall = {
-    CLIApp: ['commander', 'inquirer', 'chalk', ...commonInstallationPackages],
+    cli: ['commander', 'inquirer', 'chalk', ...commonInstallationPackages],
     node: [...commonInstallationPackages],
     react: ['vite', 'tailwind -D', 'postcss -D', 'autoprefixer -D', ...commonInstallationPackages],
-    webServer: ['express', 'cors', 'axios', ...commonInstallationPackages],
+    webserver: ['express', 'cors', 'axios', ...commonInstallationPackages],
 };
 ;
 ;
@@ -36,22 +59,7 @@ class CLIExecutor {
     constructor(projectName) {
         this.projectName = projectName;
         this.projectSrcPath = path.resolve(`${projectName}`, 'src');
-    }
-    setUp() {
-        return __awaiter(this, void 0, void 0, function* () {
-            try {
-                const message = 'Quick start or go through setup?';
-                const response = yield (0, select_1.default)({ message, choices: [{ value: 'Yes' }, { value: 'No' }] });
-                if (response === 'Yes') {
-                    //   continue with other setup  prompts
-                }
-                // execute necessary routines / functions
-            }
-            catch (err) {
-                const message = 'an error occurred while running user through application setup';
-                console.error(message, err);
-            }
-        });
+        this.userProjectName = '';
     }
     static injectConfig(config, writeLocation) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -119,18 +127,24 @@ class CLIExecutor {
             }
         });
     }
-    buildProject(chosenProject) {
+    buildProject(chosenProject, preferredProjName) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
+                this.userProjectName = preferredProjName;
+                yield CLIExecutor.buildProjectFolder(preferredProjName);
                 const npm = chosenProject !== "react" ? 'npm init -y' : null;
                 const commands = {
                     normalInstall: 'npm install',
                     devInstall: 'npm install -D',
-                    viteInstall: [`vite create ${this.projectName} --template react`, `cd ${this.projectName}`]
+                    viteInstall: [`vite create ${preferredProjName} --template react`]
                 };
                 if (chosenProject === "react") {
                     yield CLIExecutor.executeCommands(commands.viteInstall);
                     return;
+                }
+                if (!projectTypes.includes(chosenProject)) {
+                    const message = 'input project is not valid';
+                    throw new Error(message);
                 }
                 const commandsToExecute = packagesToInstall[chosenProject];
                 yield CLIExecutor.executeCommands([npm, ...commandsToExecute]);
@@ -143,12 +157,14 @@ class CLIExecutor {
             }
         });
     }
-    buildProjectFolder() {
+    static buildProjectFolder(projectName) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const pathToUse = process.cwd();
+                const pathToUse = path.resolve(process.cwd(), projectName);
                 yield fs.promises.mkdir(pathToUse, { recursive: false });
-                console.log('finished');
+                const pathToNavigateTo = path.resolve(process.cwd(), projectName);
+                process.chdir(pathToNavigateTo);
+                console.log('finished creating project folder and navigating into it');
             }
             catch (err) {
                 const message = 'an error occurred while building project';
@@ -183,16 +199,16 @@ class CLIExecutor {
             }
         });
     }
-    quickTree(item, flag) {
+    quickTree(item, fileType) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 let itemsStore = typeof item === 'string' ? [item] : [...item];
                 for (const item of itemsStore) {
                     const pathToUse = path.resolve(this.projectSrcPath, item);
-                    if (flag === "dir") {
+                    if (fileType === "dir") {
                         yield fs.promises.mkdir(pathToUse, { recursive: false });
                     }
-                    if (flag === 'file') {
+                    if (fileType === 'file') {
                         yield fs.promises.writeFile(pathToUse, '', { encoding: 'utf-8' });
                     }
                 }

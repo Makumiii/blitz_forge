@@ -32,8 +32,8 @@ class taskTracker{
         // this.supportedFiles = ['.ts', '.tsx', '.js', '.jsx'];
         this.store = [];
         this.codeBaseLocation = path.resolve(this.cwd, 'src');
-        this.tasksPermanentStoreLocation = path.resolve(__dirname,'..', '..', 'user.store.json' );
-        this.storeTasksEvent = new EventEmitter().on('storeTasks',this.storeTasksHandler );
+        this.tasksPermanentStoreLocation = path.resolve(__dirname,'..', '..', 'userData', 'taskTracker', 'tasks.data.json' );
+        this.storeTasksEvent = new EventEmitter.EventEmitter().on('storeTasks',this.storeTasksHandler );
 
 
     }

@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
@@ -8,11 +9,14 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-const CLIExecutor_service_1 = require("./services/CLIExecutor.service");
-const executor = new CLIExecutor_service_1.default('TEST_PROJECT');
-(function makeProject() {
+const CLIInterface_service_1 = __importDefault(require("./services/CLIInterface.service"));
+(function startInterface() {
     return __awaiter(this, void 0, void 0, function* () {
-        yield executor.buildProjectFolder();
+        console.log('application started running successfully');
+        yield new CLIInterface_service_1.default().configureCommands();
     });
 })();

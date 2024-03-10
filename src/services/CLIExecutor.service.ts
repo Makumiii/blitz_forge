@@ -4,7 +4,8 @@ import * as fs from "fs";
 import {exec} from "node:child_process";
 
 type Temps = 'ts' | 'tailwind' | 'eslint' | 'nodemon' | 'postcss';
-type Project = 'react' | 'node' | 'webServer' | 'CLIApp';
+export type Project = 'react' | 'node' | 'webserver' | 'cli';
+const projectTypes: Project[] = ["react", "node", "cli", "webserver"];
 const mvc = ['models','controllers', 'views']  as const;
 const layered = ['controllers', 'models', 'services'] as const;
 type Architectures = typeof mvc | typeof layered;
@@ -24,10 +25,10 @@ const configsExt:configsExt = {
 } as const;
 const commonInstallationPackages : string[] = ['typescript'];
 const packagesToInstall : {[key in Project]:string[]} = {
-    CLIApp:['commander', 'inquirer', 'chalk', ...commonInstallationPackages],
+    cli:['commander', 'inquirer', 'chalk', ...commonInstallationPackages],
     node:[...commonInstallationPackages],
     react:['vite', 'tailwind -D', 'postcss -D', 'autoprefixer -D',...commonInstallationPackages],
-    webServer:['express', 'cors', 'axios', ...commonInstallationPackages],
+    webserver:['express', 'cors', 'axios', ...commonInstallationPackages],
 } as const
 
 
@@ -47,26 +48,10 @@ type todos = 'critical' | 'highPriority' | 'medium' | 'low' | 'optional';
 
 class CLIExecutor{
     private projectSrcPath : string;
+    public userProjectName : string;
     constructor(private projectName:string){
-        this.projectSrcPath = path.resolve(`${projectName}`, 'src')
-    }
-    public async setUp():Promise<void>{
-        try{
-            const message = 'Quick start or go through setup?';
-            const response = await select({message, choices:[{value:'Yes'}, {value:'No'}]});
-            if(response === 'Yes'){
-            //   continue with other setup  prompts
-            }
-            // execute necessary routines / functions
-
-        }
-        catch(err){
-            const message = 'an error occurred while running user through application setup';
-            console.error(message, err);
-        }
-
-
-
+        this.projectSrcPath = path.resolve(`${projectName}`, 'src');
+        this.userProjectName = '';
     }
     static async injectConfig(config:Temps, writeLocation:string):Promise<boolean>{
         try{
@@ -147,8 +132,11 @@ class CLIExecutor{
 
     }
 
-    public async buildProject(chosenProject:Project):Promise<void>{
+    public async buildProject(chosenProject:Project, preferredProjName:string):Promise<void>{
         try{
+            this.userProjectName = preferredProjName;
+
+            await CLIExecutor.buildProjectFolder(preferredProjName);
             interface commands{
                 normalInstall:string,
                 devInstall:string,
@@ -158,12 +146,19 @@ class CLIExecutor{
             const commands : commands = {
                 normalInstall:'npm install',
                 devInstall:'npm install -D',
-                viteInstall:[`vite create ${this.projectName} --template react`, `cd ${this.projectName}`]
+                viteInstall:[`vite create ${preferredProjName} --template react`]
             } as const;
             if(chosenProject === "react"){
                 await CLIExecutor.executeCommands(commands.viteInstall);
                 return
             }
+            if(!projectTypes.includes(chosenProject)){
+                const message = 'input project is not valid';
+                throw new Error(message);
+
+            }
+
+
             const commandsToExecute = packagesToInstall[chosenProject];
             await CLIExecutor.executeCommands([npm as string, ...commandsToExecute]);
             return;
@@ -177,11 +172,13 @@ class CLIExecutor{
 
     }
 
-    public async buildProjectFolder():Promise<void>{
+    static async buildProjectFolder(projectName:string):Promise<void>{
         try{
-            const pathToUse = process.cwd();
+            const pathToUse = path.resolve(process.cwd(), projectName);
             await fs.promises.mkdir(pathToUse, {recursive:false});
-            console.log('finished');
+            const pathToNavigateTo = path.resolve(process.cwd(),projectName );
+            process.chdir(pathToNavigateTo);
+            console.log('finished creating project folder and navigating into it');
 
         }
         catch(err){
@@ -242,22 +239,8 @@ class CLIExecutor{
             const message = 'an error occurred while making quickTree';
             console.error(message, err);
         }
-
-
     }
-    public async getTodo():Promise<string[] | null>{
-        try{
-            const projectFilesDir = 'src';
 
-
-        }
-        catch(err){
-            const message = 'an error occurred while getting todos from files';
-            console.error(message,err)};
-        return null;
-
-
-    }
 
 
 }

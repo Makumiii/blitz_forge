@@ -4,8 +4,7 @@
   "description": "A scaffolding tool for Node.js and TypeScript React projects. Get started quickly with TypeScript configurations for Node.js and React, including Tailwind CSS for React projects. Customize project structures with ease using a JSON configuration file. Streamline your development workflow and unleash your productivity🚀",
   "main": "index.js",
   "bin": {
-    "blitz_forge": "./dist/index.js"
-
+    "blitz": "./dist/index.js"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -36,7 +35,8 @@
   "homepage": "https://github.com/Makumiii/blitz_forge#readme",
   "dependencies": {
     "@inquirer/prompts": "^4.1.0",
-    "@inquirer/select": "^2.0.0",
+    "@inquirer/rawlist": "^2.0.2",
+    "@inquirer/select": "^2.1.1",
     "chalk": "^5.3.0",
     "commander": "^12.0.0",
     "enquirer": "^2.4.1",
