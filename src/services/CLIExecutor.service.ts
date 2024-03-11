@@ -2,6 +2,7 @@ import select, {Separator} from '@inquirer/select'
 import * as path from "node:path";
 import * as fs from "fs";
 import {exec} from "node:child_process";
+import chalk from 'chalk'
 
 type Temps = 'ts' | 'tailwind' | 'eslint' | 'nodemon' | 'postcss';
 export type Project = 'react' | 'node' | 'webserver' | 'cli';
@@ -49,25 +50,37 @@ type todos = 'critical' | 'highPriority' | 'medium' | 'low' | 'optional';
 class CLIExecutor{
     private projectSrcPath : string;
     public userProjectName : string;
+    public projectRootPath : string;
     constructor(private projectName:string){
         this.projectSrcPath = path.resolve(`${projectName}`, 'src');
         this.userProjectName = '';
+        this.projectRootPath = path.resolve(process.cwd(), this.projectName);
     }
-    static async injectConfig(config:Temps, writeLocation:string):Promise<boolean>{
+    static async injectConfig(config:Temps, writeLocation:string):Promise<void>{
         try{
-            const tempsLocation = path.resolve(__dirname,'..', 'temps' , config);
-            if((await fs.promises.stat(tempsLocation)).isFile()){
-                const file = await fs.promises.readFile(tempsLocation, 'utf-8');
-                await fs.promises.writeFile(writeLocation,file)
-                return true;
-            };
-            throw new Error('template is not a valid file');
+            const fileName = configsExt[config].name + configsExt[config].ext;
+            const defaultTempsLocation = path.resolve(__dirname,'..','..',  'temps' ,'default',);
+            const defaultConfigs = await fs.promises.readdir(defaultTempsLocation, {encoding:'utf-8'});
+            const foundConfig = defaultConfigs.find((_)=> _.includes(config));
+            if(foundConfig !== undefined){
+                const configPath = path.resolve(defaultTempsLocation, foundConfig);
 
+                if((await fs.promises.stat(configPath)).isFile()){
+                    const file = await fs.promises.readFile(configPath, 'utf-8');
+                    const newWriteLocation = path.resolve(writeLocation, fileName);
+                    await fs.promises.writeFile(newWriteLocation,file);
+                    return;
+                };
+                throw new Error('template is not a valid file');
+
+            }
+
+            throw new Error('config specified template config not found');
         }
         catch(err){
             const message = 'an error occurred while injecting config to user project';
             console.error(message, err);
-            return false;
+            return;
 
         }
     }
@@ -134,7 +147,10 @@ class CLIExecutor{
 
     public async buildProject(chosenProject:Project, preferredProjName:string):Promise<void>{
         try{
+            console.log(chalk.yellow('building project started'));
+
             this.userProjectName = preferredProjName;
+            this.projectRootPath = path.resolve(process.cwd(), preferredProjName);
 
             await CLIExecutor.buildProjectFolder(preferredProjName);
             interface commands{
@@ -157,10 +173,14 @@ class CLIExecutor{
                 throw new Error(message);
 
             }
-
-
             const commandsToExecute = packagesToInstall[chosenProject];
-            await CLIExecutor.executeCommands([npm as string, ...commandsToExecute]);
+            const mergedCommandsToExecute = commandsToExecute.map((command)=>{
+                const commandType = command.includes('-D') ? commands.devInstall : commands.normalInstall;
+
+                return `${commandType} ${command}`;
+            });
+            await CLIExecutor.executeCommands([npm as string, ...mergedCommandsToExecute]);
+            await CLIExecutor.injectConfig('ts',this.projectRootPath );
             return;
 
         }

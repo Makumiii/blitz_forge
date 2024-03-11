@@ -1,11 +1,13 @@
 {
   "name": "blitz_forge",
+  "type": "module",
   "version": "1.0.0",
   "description": "A scaffolding tool for Node.js and TypeScript React projects. Get started quickly with TypeScript configurations for Node.js and React, including Tailwind CSS for React projects. Customize project structures with ease using a JSON configuration file. Streamline your development workflow and unleash your productivity🚀",
   "main": "index.js",
   "bin": {
     "blitz": "./dist/index.js"
   },
+
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon",

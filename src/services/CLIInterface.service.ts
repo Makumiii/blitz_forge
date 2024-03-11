@@ -1,5 +1,5 @@
 import {Command} from 'commander';
-import CLIExecutor, {Project} from "./CLIExecutor.service";
+import CLIExecutor, {Project} from "./CLIExecutor.service.js";
 import select, { Separator } from '@inquirer/select';
 import rawlist from '@inquirer/rawlist';
 import {input} from "@inquirer/prompts";

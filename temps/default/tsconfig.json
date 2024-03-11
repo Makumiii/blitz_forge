@@ -1,12 +1,21 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
-    "target": "ES6",
+    "module": "NodeNext",
+    "target": "ESNext",
     "outDir": "dist",
     "rootDir": "src",
-    "strict": true
+    "strict": true,
+    "esModuleInterop":true,
+    "moduleResolution": "NodeNext",
+    "allowImportingTsExtensions": false,
+    "alwaysStrict": true,
+    "strictNullChecks": true,
+    "noImplicitAny": true,
+    "allowUnreachableCode":false,
+    "allowSyntheticDefaultImports": true
+
   },
   "include": ["src/**/*", "@types/**/*.d.ts"],
   "types": ["node"],
-  "exclude": ["node_modules"],
+  "exclude": ["node_modules"]
 }
