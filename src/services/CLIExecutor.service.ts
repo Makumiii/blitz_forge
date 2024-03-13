@@ -2,7 +2,8 @@ import select, {Separator} from '@inquirer/select'
 import * as path from "node:path";
 import * as fs from "fs";
 import {exec} from "node:child_process";
-import chalk from 'chalk'
+import chalk, {BackgroundColorName, ForegroundColorName} from 'chalk'
+import {fileURLToPath} from "node:url";
 
 type Temps = 'ts' | 'tailwind' | 'eslint' | 'nodemon' | 'postcss';
 export type Project = 'react' | 'node' | 'webserver' | 'cli';
@@ -51,15 +52,17 @@ class CLIExecutor{
     private projectSrcPath : string;
     public userProjectName : string;
     public projectRootPath : string;
+    public __dirName: string
     constructor(private projectName:string){
         this.projectSrcPath = path.resolve(`${projectName}`, 'src');
         this.userProjectName = '';
         this.projectRootPath = path.resolve(process.cwd(), this.projectName);
+        this.__dirName = path.dirname(fileURLToPath(import.meta.url));
     }
     static async injectConfig(config:Temps, writeLocation:string):Promise<void>{
         try{
             const fileName = configsExt[config].name + configsExt[config].ext;
-            const defaultTempsLocation = path.resolve(__dirname,'..','..',  'temps' ,'default',);
+            const defaultTempsLocation = path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..','..',  'temps' ,'default',);
             const defaultConfigs = await fs.promises.readdir(defaultTempsLocation, {encoding:'utf-8'});
             const foundConfig = defaultConfigs.find((_)=> _.includes(config));
             if(foundConfig !== undefined){
@@ -147,7 +150,7 @@ class CLIExecutor{
 
     public async buildProject(chosenProject:Project, preferredProjName:string):Promise<void>{
         try{
-            console.log(chalk.yellow('building project started'));
+            CLIExecutor.logProgress('building project started', 'working');
 
             this.userProjectName = preferredProjName;
             this.projectRootPath = path.resolve(process.cwd(), preferredProjName);
@@ -162,7 +165,7 @@ class CLIExecutor{
             const commands : commands = {
                 normalInstall:'npm install',
                 devInstall:'npm install -D',
-                viteInstall:[`vite create ${preferredProjName} --template react`]
+                viteInstall:[`npm create vite@latest create ${preferredProjName} --template react`]
             } as const;
             if(chosenProject === "react"){
                 await CLIExecutor.executeCommands(commands.viteInstall);
@@ -198,7 +201,7 @@ class CLIExecutor{
             await fs.promises.mkdir(pathToUse, {recursive:false});
             const pathToNavigateTo = path.resolve(process.cwd(),projectName );
             process.chdir(pathToNavigateTo);
-            console.log('finished creating project folder and navigating into it');
+            CLIExecutor.logProgress('building project Folder success', 'success' );
 
         }
         catch(err){
@@ -211,7 +214,7 @@ class CLIExecutor{
     public async readTemplateConfigs(config:Temps , folder:'custom' | 'default'):Promise<string | null>{
         try{
             const extName = configsExt[config].ext;
-            const tempLocation = path.resolve(__dirname, '..', 'temps' , folder, `${config}.${extName}`);
+            const tempLocation = path.resolve(this.__dirName, '..', 'temps' , folder, `${config}.${extName}`);
             return await fs.promises.readFile(tempLocation, {encoding:"utf-8"});
 
         }
@@ -259,6 +262,27 @@ class CLIExecutor{
             const message = 'an error occurred while making quickTree';
             console.error(message, err);
         }
+    }
+    static logProgress(logMessage:string, logType:'err' | 'success'| 'working',color?:ForegroundColorName ):void{
+        if(logType !== "err" && logType !== "success" && logType !== 'working'){
+            console.error('logType is not valid');
+        };
+
+        let logColour: ForegroundColorName = 'blueBright';
+        if(logType === 'success'){
+            logColour = 'greenBright';
+        };
+        if(logType === 'err'){
+            logColour = 'redBright';
+        };
+        if(logType === 'working'){
+            logColour = 'yellowBright'
+        };
+        if(color !== undefined){
+            logColour = color;
+        }
+        console.log(chalk[logColour](logMessage));
+
     }
 
 

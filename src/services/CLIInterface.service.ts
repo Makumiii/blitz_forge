@@ -11,6 +11,7 @@ class CLIInterface{
     private programDescription: string;
     private commandsExecutorClass:CLIExecutor;
     public projectName:string;
+    public projectPath : string;
 
     constructor() {
         this.program = new Command();
@@ -18,6 +19,7 @@ class CLIInterface{
         this.programDescription = 'interface for blitz_forge scaffolding tool and inline task manager';
         this.projectName = '';
         this.commandsExecutorClass = new CLIExecutor(this.projectName);
+        this.projectPath = '';
     }
     public async configureCommands():Promise<void>{
         try{
@@ -86,6 +88,7 @@ class CLIInterface{
                 .argument('<destination>', 'where to create the folders, relative path')
                 .action(async (folders, destination):Promise<void>=>{
                     const pathToCreateFolders = path.resolve(process.cwd(), 'src' , destination);
+                    await this.commandsExecutorClass.buildArchIntoSrc()
 
 
 

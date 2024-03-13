@@ -12,7 +12,7 @@
     "strictNullChecks": true,
     "noImplicitAny": true,
     "allowUnreachableCode":false,
-    "allowSyntheticDefaultImports": true
+    "allowJs": true
 
   },
   "include": ["src/**/*", "@types/**/*.d.ts"],

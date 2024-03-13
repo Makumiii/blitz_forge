@@ -1,6 +1,7 @@
 import * as fs from "fs";
 import * as path from "node:path";
 import * as EventEmitter from "node:events";
+import {fileURLToPath} from "node:url";
 
 interface StoreStructure{
     data:string[];
@@ -32,7 +33,7 @@ class taskTracker{
         // this.supportedFiles = ['.ts', '.tsx', '.js', '.jsx'];
         this.store = [];
         this.codeBaseLocation = path.resolve(this.cwd, 'src');
-        this.tasksPermanentStoreLocation = path.resolve(__dirname,'..', '..', 'userData', 'taskTracker', 'tasks.data.json' );
+        this.tasksPermanentStoreLocation = path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..', '..', 'userData', 'taskTracker', 'tasks.data.json' );
         this.storeTasksEvent = new EventEmitter.EventEmitter().on('storeTasks',this.storeTasksHandler );
 
 
