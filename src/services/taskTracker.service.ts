@@ -180,7 +180,29 @@ class taskTracker{
             console.error(message, err);
             return null;
         }
+    };
+
+    public async shakeTree(target?:string):Promise<void>{
+        try{
+            const targetLocation = target === undefined ? this.codeBaseLocation : target;
+            const targetLocationContent = fs.promises.readdir(targetLocation, {encoding: 'utf-8'});
+            for(const content of targetLocation){
+                const contentLocation = path.resolve(targetLocation , content);
+                if((await fs.promises.stat(contentLocation)).isFile()){
+                    const fileCont = await taskTracker.readOperations(contentLocation, {stream:false}) as string;
+                    const modifiedCont = fileCont.replace(this.commentSignatureRegex, '');
+                    await taskTracker.writeOperations(contentLocation,modifiedCont,{stream:false});
+                }
+                await this.shakeTree(contentLocation);
+            }
+        }
+        catch(err){
+            const message = 'an error occurred while shaking taskTree in codebase';
+            console.error(message, err);
+        }
     }
+
+
 
 
 
