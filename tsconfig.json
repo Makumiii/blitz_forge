@@ -12,7 +12,8 @@
     "strictNullChecks": true,
     "noImplicitAny": true,
     "allowUnreachableCode":false,
-    "allowJs": true
+    "allowJs": true,
+    "resolveJsonModule": true
 
   },
   "include": ["src/**/*", "@types/**/*.d.ts"],

@@ -4,14 +4,18 @@ import * as fs from "fs";
 import {exec} from "node:child_process";
 import chalk, {BackgroundColorName, ForegroundColorName} from 'chalk'
 import {fileURLToPath} from "node:url";
+import packageJson from '../../package.json';
+
+/*
+todos
+1. consolidate reading configs and writing configs into projects in one method
+2. merge functionality to write folders into src or dirs in src into one with putting down architectures
+3. removes architectures and add a feature to record dir structure when called to only
+ */
 
 type Temps = 'ts' | 'tailwind' | 'eslint' | 'nodemon' | 'postcss';
 export type Project = 'react' | 'node' | 'webserver' | 'cli';
 const projectTypes: Project[] = ["react", "node", "cli", "webserver"];
-const mvc = ['models','controllers', 'views']  as const;
-const layered = ['controllers', 'models', 'services'] as const;
-type Architectures = typeof mvc | typeof layered;
-type CustomArchitecture = string[];
 interface Ext{
     name:string,
     ext:string
@@ -26,6 +30,10 @@ const configsExt:configsExt = {
     nodemon:{name:'nodemon', ext:'.json'}
 } as const;
 const commonInstallationPackages : string[] = ['typescript'];
+interface Response<T> {
+    success:boolean,
+    data?:T
+};
 const packagesToInstall : {[key in Project]:string[]} = {
     cli:['commander', 'inquirer', 'chalk', ...commonInstallationPackages],
     node:[...commonInstallationPackages],
@@ -33,18 +41,18 @@ const packagesToInstall : {[key in Project]:string[]} = {
     webserver:['express', 'cors', 'axios', ...commonInstallationPackages],
 } as const
 
+const commonTemps: Partial <Temps>[] = ['ts', 'nodemon'];
 
-
-
-interface Response<T> {
-    success:boolean,
-    data?:T
-};
+const configsToInstall : {[key in Project]:Partial <Temps>[]} = {
+    cli:[...commonTemps],
+    webserver:[...commonTemps],
+    node:[...commonTemps],
+    react:[]
+}
 interface Executables{
     [type:string]:string[]
 };
 
-type todos = 'critical' | 'highPriority' | 'medium' | 'low' | 'optional';
 
 
 
@@ -59,7 +67,7 @@ class CLIExecutor{
         this.projectRootPath = path.resolve(process.cwd(), this.projectName);
         this.__dirName = path.dirname(fileURLToPath(import.meta.url));
     }
-    static async injectConfig(config:Temps, writeLocation:string):Promise<void>{
+    static async createConfigsIntoproject(config:Temps, writeLocation:string):Promise<void>{
         try{
             const fileName = configsExt[config].name + configsExt[config].ext;
             const defaultTempsLocation = path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..','..',  'temps' ,'default',);
@@ -90,24 +98,7 @@ class CLIExecutor{
 
 
 
-    public async buildArchIntoSrc(load:Architectures | CustomArchitecture, writeLocation:string,overrideSrc?:{dirLocation:string}):Promise<Response<any>>{
-        try{
-            const override = overrideSrc !== undefined;
-            for(const folder in load){
-                const creationLocation = override ? path.resolve(overrideSrc?.dirLocation, folder) : writeLocation;
-                await fs.promises.mkdir(creationLocation, {recursive:false});
-            }
-            const success = true;
-            return {success}
-        }
-        catch(err){
-            const message = 'an error occurred while building architecture in src';
-            console.error(message, err);
-            const success = false;
-            return {success}
-        }
 
-    }
 
     static async executeCommands(command:string | string[]):Promise<void>{
         try{
@@ -183,8 +174,17 @@ class CLIExecutor{
                 return `${commandType} ${command}`;
             });
             await CLIExecutor.executeCommands([npm as string, ...mergedCommandsToExecute]);
-            await CLIExecutor.injectConfig('ts',this.projectRootPath );
-            return;
+
+            // add required project templates configuration
+            const configsToBeCreated = configsToInstall[chosenProject];
+            for(const currentConfig of configsToBeCreated){
+                await CLIExecutor.createConfigsIntoproject(currentConfig,this.projectRootPath );
+                return;
+            };
+            //add scripts to build and run nodemon to package.json
+            await this.addScriptsToPackageJson();
+
+
 
         }
         catch(err){
@@ -211,49 +211,17 @@ class CLIExecutor{
 
     }
 
-    public async readTemplateConfigs(config:Temps , folder:'custom' | 'default'):Promise<string | null>{
-        try{
-            const extName = configsExt[config].ext;
-            const tempLocation = path.resolve(this.__dirName, '..', 'temps' , folder, `${config}.${extName}`);
-            return await fs.promises.readFile(tempLocation, {encoding:"utf-8"});
-
-        }
-        catch(err){
-            const message = 'an error occurred while reading template configs';
-            console.error(message, err);
-            return null;
-
-        }
-    }
-
-    public async writeConfigsIntoProject (data:string,writeDestination?: string):Promise<void>{
-        try{
-            const dflt = process.cwd();
-            const destination = writeDestination === undefined ? dflt : writeDestination;
-            await fs.promises.writeFile(destination, data , {encoding:'utf-8'} );
-
-
-        }
-        catch(err){
-            const message = 'an error occurred while writing configs into project';
-            console.error(message,err);
-        }
-    }
-
-    public async quickTree(item:string | string[],fileType:'dir' | 'file'):Promise<void>{
+    public async quickTree(items:string[],fileType:'dir' | 'file', treeDestinationPath?:string):Promise<void>{
 
         try{
-            let itemsStore :string[] = typeof item === 'string' ? [item] : [...item];
-            for(const item of itemsStore){
-                const pathToUse = path.resolve(this.projectSrcPath, item);
+
+            const destToUse = treeDestinationPath === undefined ? this.projectSrcPath : treeDestinationPath;
+            for(const item of items){
                 if(fileType === "dir"){
-
-                    await fs.promises.mkdir(pathToUse, {recursive:false});
-
+                    await fs.promises.mkdir(destToUse, {recursive:false});
                 }
                 if(fileType === 'file'){
-                    await fs.promises.writeFile(pathToUse, '', {encoding:'utf-8'});
-
+                    await fs.promises.writeFile(destToUse, '', {encoding:'utf-8'});
                 }
             }
             console.log('making quick tree is a success');
@@ -263,6 +231,7 @@ class CLIExecutor{
             console.error(message, err);
         }
     }
+
     static logProgress(logMessage:string, logType:'err' | 'success'| 'working',color?:ForegroundColorName ):void{
         if(logType !== "err" && logType !== "success" && logType !== 'working'){
             console.error('logType is not valid');
@@ -282,6 +251,35 @@ class CLIExecutor{
             logColour = color;
         }
         console.log(chalk[logColour](logMessage));
+
+    }
+
+    private async addScriptsToPackageJson():Promise<void>{
+        try{
+            //read package.json in user project root
+            const packageJsonCont = JSON.parse(await fs.promises.readFile(this.projectRootPath, {encoding:"utf-8"}));
+            // add scripts to scripts prop
+            interface ScriptsToAdd extends Partial<typeof packageJson>{};
+
+            const scriptsToAddToJson : ScriptsToAdd = {
+                scripts:{
+                    "test": "echo \"Error: no test specified\" && exit 1",
+                    "start": "nodemon",
+                    "build": "tsc -p . --watch"
+                }
+            }
+            packageJsonCont.scripts = scriptsToAddToJson;
+
+            //write new scripts to the package.json
+
+            await fs.promises.writeFile(this.projectRootPath,JSON.stringify(packageJsonCont), {encoding:'utf-8'});
+            return;
+
+
+        }catch(err){
+            const message = 'an error occured while adding scripts to package json';
+            console.error(message, err);
+        }
 
     }
 

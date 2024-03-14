@@ -26,7 +26,8 @@ class CLIInterface{
             this.program
                 .version(this.programVersion)
                 .description(this.programDescription);
-            await this.scaffoldInterface()
+            await this.scaffoldInterface();
+            await this.buildTree();
             this.program.parse(process.argv);
 
         }
@@ -47,6 +48,7 @@ class CLIInterface{
                 .argument('[projectType]', 'name of the type of project that the user intends to scaffold')
                 .option('-i, --init', 'initialize with a guided setup')
                 .action(async (projectName, projectType, options):Promise<void>=>{
+                    this.projectName = projectName;
                     if(options.init){
                         // first step: get project name
                         const userInputProjectName = await input({
@@ -80,19 +82,16 @@ class CLIInterface{
         }
     }
 
-    public async archInSrcInterface():Promise<void>{
+    public async buildTree():Promise<void>{
         try{
             this.program
                 .command('arch')
-                .argument('<folders>', 'folders to create in src')
+                .argument('<load>', 'folders to create in src')
                 .argument('<destination>', 'where to create the folders, relative path')
-                .action(async (folders, destination):Promise<void>=>{
+                .argument('<type>', 'what kind of tree to be made, either dirs or files. If files the extension should be part of the load')
+                .action(async (load,type, destination):Promise<void>=>{
                     const pathToCreateFolders = path.resolve(process.cwd(), 'src' , destination);
-                    await this.commandsExecutorClass.buildArchIntoSrc()
-
-
-
-
+                    await this.commandsExecutorClass.quickTree(load,type, destination)
                 })
 
         }
