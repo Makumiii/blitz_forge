@@ -3,6 +3,7 @@ import CLIExecutor, {Project} from "./CLIExecutor.service.js";
 import select, { Separator } from '@inquirer/select';
 import rawlist from '@inquirer/rawlist';
 import {input} from "@inquirer/prompts";
+
 import * as path from "node:path";
 
 class CLIInterface{
@@ -41,7 +42,6 @@ class CLIInterface{
     public async scaffoldInterface():Promise<void>{
 
         try{
-            console.log('program acknowledged')
             this.program
                 .command('project')
                 .argument('[projectName]', 'name of the project being created')
@@ -86,20 +86,25 @@ class CLIInterface{
         try{
             this.program
                 .command('arch')
-                .argument('<load>', 'folders to create in src')
-                .argument('<destination>', 'where to create the folders, relative path')
-                .argument('<type>', 'what kind of tree to be made, either dirs or files. If files the extension should be part of the load')
-                .action(async (load,type, destination):Promise<void>=>{
-                    const pathToCreateFolders = path.resolve(process.cwd(), 'src' , destination);
-                    await this.commandsExecutorClass.quickTree(load,type, destination)
+                .argument('<contType>', 'specifies the type')
+                .argument('<load...>', 'folders to create in src')
+                .action(async (load,contType):Promise<void>=>{
+                    console.log('started to create quick tree');
+                    if(contType !== 'dir' && contType !== 'file'){
+                        console.log('specified type is not allowed')
+                    }
+                    await this.commandsExecutorClass.quickTree(load,contType);
                 })
 
         }
         catch(err){
-            const message = 'an error occurred while building archInSrc interface';
-            console.error(message, err);
-
         }
+    }
+    // commands and interface related to taskTracker
+    public async taskTracker():Promise<void>{
+        this.program
+            .command('')
+
     }
 
 

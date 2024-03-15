@@ -211,20 +211,23 @@ class CLIExecutor{
 
     }
 
-    public async quickTree(items:string[],fileType:'dir' | 'file', treeDestinationPath?:string):Promise<void>{
+    public async quickTree(items:string[],fileType:'dir' | 'file'):Promise<void>{
 
         try{
+            CLIExecutor.logProgress('building quick tree...', "working");
 
-            const destToUse = treeDestinationPath === undefined ? this.projectSrcPath : treeDestinationPath;
+
             for(const item of items){
+                const pathToUse = path.resolve(process.cwd(), item);
                 if(fileType === "dir"){
-                    await fs.promises.mkdir(destToUse, {recursive:false});
+                    await fs.promises.mkdir(pathToUse, {recursive:false});
                 }
                 if(fileType === 'file'){
-                    await fs.promises.writeFile(destToUse, '', {encoding:'utf-8'});
+                    await fs.promises.writeFile(pathToUse, '', {encoding:'utf-8'});
                 }
             }
             console.log('making quick tree is a success');
+            CLIExecutor.logProgress('building quick tree complete', 'success');
         }
         catch(err){
             const message = 'an error occurred while making quickTree';
