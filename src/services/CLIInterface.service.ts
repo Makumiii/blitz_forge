@@ -4,7 +4,6 @@ import select, { Separator } from '@inquirer/select';
 import rawlist from '@inquirer/rawlist';
 import {input} from "@inquirer/prompts";
 
-import * as path from "node:path";
 
 class CLIInterface{
     private program :Command;
@@ -24,6 +23,7 @@ class CLIInterface{
     }
     public async configureCommands():Promise<void>{
         try{
+            console.log('started configuring commands')
             this.program
                 .version(this.programVersion)
                 .description(this.programDescription);
@@ -86,14 +86,18 @@ class CLIInterface{
         try{
             this.program
                 .command('arch')
-                .argument('<contType>', 'specifies the type')
                 .argument('<load...>', 'folders to create in src')
-                .action(async (load,contType):Promise<void>=>{
-                    console.log('started to create quick tree');
-                    if(contType !== 'dir' && contType !== 'file'){
-                        console.log('specified type is not allowed')
+                .option('-f, --file', 'specifies file type')
+                .option('-d, --dir', 'specifies directory type')
+                .action(async (load,options):Promise<void>=>{
+                    console.log(options);
+                    if(options.file !== true && options.dir !== true){
+                        console.log('type flag was not specified');
+                        return;
                     }
-                    await this.commandsExecutorClass.quickTree(load,contType);
+                    const fileType = options.file ? 'file' : 'dir';
+
+                    await this.commandsExecutorClass.quickTree(load,fileType);
                 })
 
         }
@@ -103,7 +107,7 @@ class CLIInterface{
     // commands and interface related to taskTracker
     public async taskTracker():Promise<void>{
         this.program
-            .command('')
+            .command('tt')
 
     }
 
