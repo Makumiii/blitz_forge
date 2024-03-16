@@ -177,9 +177,11 @@ class CLIExecutor{
 
             // add required project templates configuration
             const configsToBeCreated = configsToInstall[chosenProject];
+            console.log(configsToBeCreated)
             for(const currentConfig of configsToBeCreated){
                 await CLIExecutor.createConfigsIntoproject(currentConfig,this.projectRootPath );
-                return;
+                console.log(currentConfig);
+
             };
             //add scripts to build and run nodemon to package.json
             await this.addScriptsToPackageJson();

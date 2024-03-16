@@ -43,7 +43,7 @@ class CLIInterface{
 
         try{
             this.program
-                .command('project')
+                .command('proj')
                 .argument('[projectName]', 'name of the project being created')
                 .argument('[projectType]', 'name of the type of project that the user intends to scaffold')
                 .option('-i, --init', 'initialize with a guided setup')
@@ -90,7 +90,6 @@ class CLIInterface{
                 .option('-f, --file', 'specifies file type')
                 .option('-d, --dir', 'specifies directory type')
                 .action(async (load,options):Promise<void>=>{
-                    console.log(options);
                     if(options.file !== true && options.dir !== true){
                         console.log('type flag was not specified');
                         return;
