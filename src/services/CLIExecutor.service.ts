@@ -183,7 +183,7 @@ class CLIExecutor{
                 console.log(currentConfig);
 
             };
-            //add scripts to build and run nodemon to package.json
+            //add scripts to build ts and run nodemon to package.json
             await this.addScriptsToPackageJson();
 
 
@@ -261,23 +261,24 @@ class CLIExecutor{
 
     private async addScriptsToPackageJson():Promise<void>{
         try{
+            const pathToFile = path.resolve(this.projectRootPath, 'package.json');
+
             //read package.json in user project root
-            const packageJsonCont = JSON.parse(await fs.promises.readFile(this.projectRootPath, {encoding:"utf-8"}));
+            const packageJsonCont = JSON.parse(await fs.promises.readFile(pathToFile, {encoding:"utf-8"}));
             // add scripts to scripts prop
-            interface ScriptsToAdd extends Partial<typeof packageJson>{};
+            interface ScriptsToAdd extends Partial<typeof packageJson.scripts>{};
 
             const scriptsToAddToJson : ScriptsToAdd = {
-                scripts:{
-                    "test": "echo \"Error: no test specified\" && exit 1",
-                    "start": "nodemon",
-                    "build": "tsc -p . --watch"
-                }
+
+                    test: "echo \"Error: no test specified\" && exit 1",
+                    start: "nodemon",
+                    build: "tsc -p . --watch"
             }
             packageJsonCont.scripts = scriptsToAddToJson;
 
             //write new scripts to the package.json
 
-            await fs.promises.writeFile(this.projectRootPath,JSON.stringify(packageJsonCont), {encoding:'utf-8'});
+            await fs.promises.writeFile(pathToFile,JSON.stringify(packageJsonCont), {encoding:'utf-8'});
             return;
 
 
