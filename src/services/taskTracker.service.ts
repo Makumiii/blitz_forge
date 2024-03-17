@@ -91,11 +91,11 @@ class taskTracker{
     }
 
 
-    public async searchTasksInCB(entryLocation?:string):Promise<void>{
+    public async searchTasksInCB():Promise<void>{
         try{
             CLIExecutor.logProgress('searchingTasksInCB started ...', 'working');
 
-            const entryPointToUse = entryLocation === undefined ? this.codeBaseLocation : entryLocation;
+            const entryPointToUse = process.cwd();
             const files = await taskTracker.traverseDirTree(entryPointToUse,{result:true}) as string[];
             for(const file in files){
                 const fileContent = await taskTracker.readOperations(file, {stream:false}) as string;
@@ -158,7 +158,7 @@ class taskTracker{
 
     }
 
-    private async getTasksToDisplay():Promise<string[] | null>{
+    public async getTasksToDisplay():Promise<string[] | null>{
         try{
             CLIExecutor.logProgress('started getting tasks to display', 'working');
             const storeContent = await taskTracker.readOperations(this.tasksPermanentStoreLocation, {stream:false}) as string;
@@ -172,10 +172,10 @@ class taskTracker{
         }
     };
 
-    public async shakeTree(target?:string):Promise<void>{
+    public async shakeTree():Promise<void>{
         try{
             CLIExecutor.logProgress('shaking Tree started', 'working')
-            const targetLocation = target === undefined ? this.codeBaseLocation : target;
+            const targetLocation= process.cwd();
             const files =  await taskTracker.traverseDirTree(targetLocation,{result:true}) as string[];
             for (const file of files){
                 const fileContent = await taskTracker.readOperations(file,{stream:false} ) as string;

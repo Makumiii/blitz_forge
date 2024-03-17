@@ -3,6 +3,7 @@ import CLIExecutor, {Project} from "./CLIExecutor.service.js";
 import select, { Separator } from '@inquirer/select';
 import rawlist from '@inquirer/rawlist';
 import {input} from "@inquirer/prompts";
+import taskTracker from "./taskTracker.service.js";
 
 
 class CLIInterface{
@@ -10,6 +11,7 @@ class CLIInterface{
     private programVersion: string;
     private programDescription: string;
     private commandsExecutorClass:CLIExecutor;
+    private taskTrackerClass:taskTracker;
     public projectName:string;
     public projectPath : string;
 
@@ -20,6 +22,7 @@ class CLIInterface{
         this.projectName = '';
         this.commandsExecutorClass = new CLIExecutor(this.projectName);
         this.projectPath = '';
+        this.taskTrackerClass = new taskTracker();
     }
     public async configureCommands():Promise<void>{
         try{
@@ -107,6 +110,25 @@ class CLIInterface{
     public async taskTracker():Promise<void>{
         this.program
             .command('tt')
+            .option('-g --get', 'get present tasks from codebase')
+            .option('-s --shake', 'shake tree to remove all todo in given cwd')
+            .action(async(options)=>{
+                if(options.get){
+                    await this.taskTrackerClass.searchTasksInCB();
+                    const tasksArray = await this.taskTrackerClass.getTasksToDisplay() as string[];
+                    tasksArray.forEach((task)=>{
+                        console.log(task)
+                    })
+                    return
+
+                }
+                if(options.shake){
+                    await this.taskTrackerClass.shakeTree();
+                    return;
+                }
+                console.log('option not specified or invalid');
+
+            })
 
     }
 
