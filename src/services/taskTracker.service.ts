@@ -3,6 +3,7 @@ import * as path from "node:path";
 import * as EventEmitter from "node:events";
 import {fileURLToPath} from "node:url";
 
+
 interface StoreStructure{
     data:string[];
     lastModified:Date | null;
@@ -200,6 +201,40 @@ class taskTracker{
             const message = 'an error occurred while shaking taskTree in codebase';
             console.error(message, err);
         }
+    }
+
+    static async traverseDirTree(treeLocation:string, result?:boolean,callback?:(result:string[])=>void):Promise<void | string []>{
+        try{
+
+             let arraysToReturn: string[] = [];
+             const dirItems = await fs.promises.readdir(treeLocation, {encoding:"utf-8"});
+             for(const dirItem of dirItems){
+                 const dirItemPath = path.resolve(treeLocation, dirItem);
+                 const isSupportedFile = await taskTracker.isSupportedFile(dirItemPath);
+                 const isDir = (await fs.promises.stat(dirItemPath)).isDirectory()
+                 if(isSupportedFile){
+                     arraysToReturn.push(dirItemPath)
+                 }else if(isDir) {
+                     await taskTracker.traverseDirTree(dirItemPath)
+                 }
+
+             }
+
+             if(result === true && callback){
+                 callback(arraysToReturn);
+             }
+            if(result === true){
+                return arraysToReturn;
+            }
+
+
+        }
+        catch(err){
+            const message = 'an error occurred while traversing tree';
+            console.error(message, err);
+        }
+
+
     }
 
 
