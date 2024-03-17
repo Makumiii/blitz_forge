@@ -1,6 +1,3 @@
-{
-  "data": [],
-  "lastModified": null,
-  "created": null
 
-}
+const data = []
+export default data;

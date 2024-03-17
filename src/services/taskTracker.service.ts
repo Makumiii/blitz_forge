@@ -11,11 +11,7 @@ interface StoreStructure{
     created:Date | null;
 }
 
-/*
-->make changes to the user balance regex
-->add a method to follow other users
-->refactor class properties
-*/
+
 
 
 class taskTracker{
@@ -25,7 +21,8 @@ class taskTracker{
     public store:string[];
     public bulletsSignatureRegex:RegExp;
     public codeBaseLocation:string;
-    readonly tasksPermanentStoreLocation:string;
+    readonly __dirName:string;
+    readonly tasksLocation:string;
     readonly storeTasksEvent:EventEmitter;
 
     constructor(){
@@ -35,8 +32,9 @@ class taskTracker{
         // this.supportedFiles = ['.ts', '.tsx', '.js', '.jsx'];
         this.store = [];
         this.codeBaseLocation = path.resolve(this.cwd, 'src');
-        this.tasksPermanentStoreLocation = path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..', '..', 'userData', 'taskTracker', 'tasks.data.json' );
-        this.storeTasksEvent = new EventEmitter.EventEmitter().on('storeTasks',this.storeTasksHandler );
+        this.__dirName = path.dirname(fileURLToPath(import.meta.url))
+        this.tasksLocation = path.resolve(this.__dirName,'..', '..', 'userData', 'taskTracker', 'tasks.data.json');
+        this.storeTasksEvent = new EventEmitter.EventEmitter().on('storeTasks',()=>this.storeTasksHandler(this.tasksLocation));
 
 
     }
@@ -96,19 +94,14 @@ class taskTracker{
             CLIExecutor.logProgress('searchingTasksInCB started ...', 'working');
 
             const entryPointToUse = process.cwd();
-            console.log('entry point to user, entryPointToUse');
             const files = await taskTracker.traverseDirTree(entryPointToUse,{result:true}) as string[];
-            console.log('found files', files);
             for(const file of files){
-                console.log(file);
                 const fileContent = await taskTracker.readOperations(file, {stream:false}) as string;
                 const commentMatchArray = fileContent.match(this.commentSignatureRegex) as RegExpMatchArray;
                 if(commentMatchArray === null){
                     continue;
                 }
-                console.log('Comment match array', commentMatchArray)
                 const todoItems = commentMatchArray[0].match(this.bulletsSignatureRegex) as RegExpMatchArray;
-                console.log('todo items', todoItems)
                 this.store.push(...todoItems);
             }
 
@@ -121,21 +114,21 @@ class taskTracker{
             console.error(message, err);
         }
     };
-    private async storeTasksHandler():Promise<{success:boolean}>{
+    private async storeTasksHandler(location:string):Promise<{success:boolean}>{
 
         try{
 
-
-            const content = JSON.parse(await taskTracker.readOperations(this.tasksPermanentStoreLocation, {stream:false}) as string) as StoreStructure;
-            content.data.push(...this.store);
-            const initiallyCreated = content.created !== null;
+            const fileContent = await taskTracker.readOperations(location, {stream:false}) as string;
+            const parsedData = JSON.parse(fileContent) as StoreStructure;
+            parsedData.data.push(...this.store);
+            const initiallyCreated = parsedData.created !== null;
             if(!initiallyCreated){
-                content.created = new Date();
+                parsedData.created = new Date();
             }
 
-            content.lastModified = new Date();
+            parsedData.lastModified = new Date();
 
-            await taskTracker.writeOperations(this.tasksPermanentStoreLocation, content, {stream:false});
+            await taskTracker.writeOperations(this.tasksLocation, JSON.stringify(parsedData), {stream:false});
             return {success:true};
         }
         catch(err){
@@ -169,13 +162,12 @@ class taskTracker{
     public async getTasksToDisplay():Promise<string[] | null>{
         try{
             CLIExecutor.logProgress('started getting tasks to display', 'working');
-            const storeContent = await taskTracker.readOperations(this.tasksPermanentStoreLocation, {stream:false}) as string;
-            const tasksArray = JSON.parse(storeContent) as StoreStructure;
+            const storedContent = await taskTracker.readOperations(this.tasksLocation, {stream:false}) as string;
+            const tasksArray = JSON.parse(storedContent) as StoreStructure;
             return tasksArray.data;
         }
         catch(err){
             const message = 'an error occurred while displaying tasks';
-            console.error(message, err);
             return null;
         }
     };
@@ -187,9 +179,15 @@ class taskTracker{
             const files =  await taskTracker.traverseDirTree(targetLocation,{result:true}) as string[];
             for (const file of files){
                 const fileContent = await taskTracker.readOperations(file,{stream:false} ) as string;
-                fileContent.replace(this.commentSignatureRegex, '');
-                await taskTracker.writeOperations(file, fileContent, {stream:false});
+                const matches = fileContent.match(this.commentSignatureRegex);
+                if(matches == null){
+                    continue;
+                }
+                const newFileContent = fileContent.replace(this.commentSignatureRegex, '');
+                await taskTracker.writeOperations(file, newFileContent, {stream:false});
             }
+            await this.deleteTasksFromStore();
+
             CLIExecutor.logProgress('tree shake complete', 'success');
 
         }
@@ -202,17 +200,12 @@ class taskTracker{
     static async traverseDirTree(treeLocation:string, options?:{result:boolean},callback?:(result:string[])=>void):Promise<void | string []>{
         try{
             let arraysToReturn: string[] = [];
-             console.log('path', treeLocation);
              const dirItems = await fs.promises.readdir(treeLocation, {encoding:"utf-8"});
-             console.log('dirItems are', dirItems);
              for(const dirItem of dirItems){
-                 console.log('dirItem', dirItem)
                  const dirItemPath = path.resolve(treeLocation, dirItem);
                  const isSupportedFile = await taskTracker.isSupportedFile(dirItemPath);
-                 console.log('is supported file', isSupportedFile)
                  const isDir = (await fs.promises.stat(dirItemPath)).isDirectory()
                  if(isSupportedFile){
-                     console.log('current Array', arraysToReturn)
                      arraysToReturn.push(dirItemPath)
                  }else if(isDir) {
                      const items = await taskTracker.traverseDirTree(dirItemPath, {result: true}) as string[];
@@ -238,6 +231,24 @@ class taskTracker{
         }
 
 
+    }
+
+    public async deleteTasksFromStore():Promise<void>{
+        try{
+            CLIExecutor.logProgress('deleting tasks...', "working")
+            const refreshedCont:StoreStructure = {
+                data:[],
+                created:null,
+                lastModified:null
+            };
+            await taskTracker.writeOperations(this.tasksLocation,JSON.stringify(refreshedCont), {stream:false});
+            CLIExecutor.logProgress('deleting tasks complete', 'success');
+
+        }
+        catch(err){
+            const message = 'an error occurred while deleting tasks from store';
+            console.error(message, err);
+        }
     }
 
 

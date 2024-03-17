@@ -6,12 +6,7 @@ import chalk, {BackgroundColorName, ForegroundColorName} from 'chalk'
 import {fileURLToPath} from "node:url";
 import packageJson from '../../package.json';
 
-/*
--> consolidate reading configs and writing configs into projects in one method
--> merge functionality to write folders into src or dirs in src into one with putting down architectures
-->removes architectures and add a feature to record dir structure when called to only
 
-*/
 
 type Temps = 'ts' | 'tailwind' | 'eslint' | 'nodemon' | 'postcss';
 export type Project = 'react' | 'node' | 'webserver' | 'cli';

@@ -6,6 +6,8 @@ import {input} from "@inquirer/prompts";
 import taskTracker from "./taskTracker.service.js";
 
 
+
+
 class CLIInterface{
     private program :Command;
     private programVersion: string;
@@ -111,10 +113,12 @@ class CLIInterface{
     public async taskTracker():Promise<void>{
         this.program
             .command('tt')
-            .option('-g --get', 'get present tasks from codebase')
+            .option('-b --build', 'build tasks from code base')
             .option('-s --shake', 'shake tree to remove all todo in given cwd')
+            .option('-g --get', 'get tasks in store')
+            .option('-rm --remove', 'remove tasks from store')
             .action(async(options)=>{
-                if(options.get){
+                if(options.build){
                     await this.taskTrackerClass.searchTasksInCB();
                     const tasksArray = await this.taskTrackerClass.getTasksToDisplay() as string[];
                     tasksArray.forEach((task)=>{
@@ -126,6 +130,18 @@ class CLIInterface{
                 if(options.shake){
                     await this.taskTrackerClass.shakeTree();
                     return;
+                }
+                if(options.get){
+                    const tasksArray = await this.taskTrackerClass.getTasksToDisplay() as string[];
+                    tasksArray.forEach((task)=>{
+                        console.log(task)
+                    });
+                    return
+
+                }
+                if(options.remove){
+                    await this.taskTrackerClass.deleteTasksFromStore();
+                    return
                 }
                 console.log('option not specified or invalid');
 
