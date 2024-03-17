@@ -32,6 +32,7 @@ class CLIInterface{
                 .description(this.programDescription);
             await this.scaffoldInterface();
             await this.buildTree();
+            await this.taskTracker();
             this.program.parse(process.argv);
 
         }

@@ -30,8 +30,8 @@ class taskTracker{
 
     constructor(){
         this.cwd = process.cwd();
-        this.commentSignatureRegex = /^(\/\*)(\s)?((->)\s?\S*)+\2?(\*\/)$/m;
-        this.bulletsSignatureRegex = /^((->)\s?\S*)$/gm
+        this.commentSignatureRegex =  /\/\*\s*((?:\n+->\s?\S?.*\s?)+)\s*\*\//gm;
+        this.bulletsSignatureRegex = /->\s*\S*.*\n*/g;
         // this.supportedFiles = ['.ts', '.tsx', '.js', '.jsx'];
         this.store = [];
         this.codeBaseLocation = path.resolve(this.cwd, 'src');
@@ -96,11 +96,19 @@ class taskTracker{
             CLIExecutor.logProgress('searchingTasksInCB started ...', 'working');
 
             const entryPointToUse = process.cwd();
+            console.log('entry point to user, entryPointToUse');
             const files = await taskTracker.traverseDirTree(entryPointToUse,{result:true}) as string[];
-            for(const file in files){
+            console.log('found files', files);
+            for(const file of files){
+                console.log(file);
                 const fileContent = await taskTracker.readOperations(file, {stream:false}) as string;
-                const commentString = fileContent.match(this.commentSignatureRegex) as RegExpMatchArray;
-                const todoItems = commentString[0].match(this.bulletsSignatureRegex) as RegExpMatchArray;
+                const commentMatchArray = fileContent.match(this.commentSignatureRegex) as RegExpMatchArray;
+                if(commentMatchArray === null){
+                    continue;
+                }
+                console.log('Comment match array', commentMatchArray)
+                const todoItems = commentMatchArray[0].match(this.bulletsSignatureRegex) as RegExpMatchArray;
+                console.log('todo items', todoItems)
                 this.store.push(...todoItems);
             }
 
@@ -193,17 +201,22 @@ class taskTracker{
 
     static async traverseDirTree(treeLocation:string, options?:{result:boolean},callback?:(result:string[])=>void):Promise<void | string []>{
         try{
-
-             let arraysToReturn: string[] = [];
+            let arraysToReturn: string[] = [];
+             console.log('path', treeLocation);
              const dirItems = await fs.promises.readdir(treeLocation, {encoding:"utf-8"});
+             console.log('dirItems are', dirItems);
              for(const dirItem of dirItems){
+                 console.log('dirItem', dirItem)
                  const dirItemPath = path.resolve(treeLocation, dirItem);
                  const isSupportedFile = await taskTracker.isSupportedFile(dirItemPath);
+                 console.log('is supported file', isSupportedFile)
                  const isDir = (await fs.promises.stat(dirItemPath)).isDirectory()
                  if(isSupportedFile){
+                     console.log('current Array', arraysToReturn)
                      arraysToReturn.push(dirItemPath)
                  }else if(isDir) {
-                     await taskTracker.traverseDirTree(dirItemPath)
+                     const items = await taskTracker.traverseDirTree(dirItemPath, {result: true}) as string[];
+                     arraysToReturn.push(...items);
                  }
 
              }
