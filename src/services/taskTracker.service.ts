@@ -2,6 +2,7 @@ import * as fs from "fs";
 import * as path from "node:path";
 import * as EventEmitter from "node:events";
 import {fileURLToPath} from "node:url";
+import CLIExecutor from "./CLIExecutor.service.js";
 
 
 interface StoreStructure{
@@ -92,6 +93,7 @@ class taskTracker{
 
     public async searchTasksInCB(entryLocation?:string):Promise<void>{
         try{
+            CLIExecutor.logProgress('searchingTasksInCB started ...', 'working');
 
             const entryPointToUse = entryLocation === undefined ? this.codeBaseLocation : entryLocation;
             const files = await taskTracker.traverseDirTree(entryPointToUse,{result:true}) as string[];
@@ -104,6 +106,7 @@ class taskTracker{
 
 
             this.storeTasksEvent.emit('storeTasks');
+            CLIExecutor.logProgress('storing tasks done', 'success');
         }
         catch(err){
             const message = 'an error occurred while getting tasks from src files';
@@ -170,8 +173,15 @@ class taskTracker{
 
     public async shakeTree(target?:string):Promise<void>{
         try{
+            CLIExecutor.logProgress('shaking Tree started', 'working')
             const targetLocation = target === undefined ? this.codeBaseLocation : target;
-
+            const files =  await taskTracker.traverseDirTree(targetLocation,{result:true}) as string[];
+            for (const file of files){
+                const fileContent = await taskTracker.readOperations(file,{stream:false} ) as string;
+                fileContent.replace(this.commentSignatureRegex, '');
+                await taskTracker.writeOperations(file, fileContent, {stream:false});
+            }
+            CLIExecutor.logProgress('tree shake complete', 'success');
 
         }
         catch(err){
