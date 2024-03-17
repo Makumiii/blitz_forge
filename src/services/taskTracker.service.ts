@@ -160,6 +160,7 @@ class taskTracker{
 
     private async getTasksToDisplay():Promise<string[] | null>{
         try{
+            CLIExecutor.logProgress('started getting tasks to display', 'working');
             const storeContent = await taskTracker.readOperations(this.tasksPermanentStoreLocation, {stream:false}) as string;
             const tasksArray = JSON.parse(storeContent) as StoreStructure;
             return tasksArray.data;
