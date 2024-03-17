@@ -120,10 +120,8 @@ class CLIInterface{
             .action(async(options)=>{
                 if(options.build){
                     await this.taskTrackerClass.searchTasksInCB();
-                    const tasksArray = await this.taskTrackerClass.getTasksToDisplay() as string[];
-                    tasksArray.forEach((task)=>{
-                        console.log(task)
-                    })
+                    await this.taskTrackerClass.getTasksToDisplay({display:true});
+
                     return
 
                 }
@@ -132,12 +130,8 @@ class CLIInterface{
                     return;
                 }
                 if(options.get){
-                    const tasksArray = await this.taskTrackerClass.getTasksToDisplay() as string[];
-                    tasksArray.forEach((task)=>{
-                        console.log(task)
-                    });
+                    await this.taskTrackerClass.getTasksToDisplay({display:true}) ;
                     return
-
                 }
                 if(options.remove){
                     await this.taskTrackerClass.deleteTasksFromStore();

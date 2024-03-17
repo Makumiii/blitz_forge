@@ -3,6 +3,10 @@ import * as path from "node:path";
 import * as EventEmitter from "node:events";
 import {fileURLToPath} from "node:url";
 import CLIExecutor from "./CLIExecutor.service.js";
+import {beforeEach} from "node:test";
+import chalk, {ForegroundColorName} from "chalk";
+
+
 
 
 interface StoreStructure{
@@ -10,10 +14,6 @@ interface StoreStructure{
     lastModified:Date | null;
     created:Date | null;
 }
-
-
-
-
 class taskTracker{
     public cwd:string;
     public commentSignatureRegex:RegExp;
@@ -27,8 +27,8 @@ class taskTracker{
 
     constructor(){
         this.cwd = process.cwd();
-        this.commentSignatureRegex =  /\/\*\s*((?:\n+->\s?\S?.*\s?)+)\s*\*\//gm;
-        this.bulletsSignatureRegex = /->\s*\S*.*\n*/g;
+        this.commentSignatureRegex =  /\/\*\s*((\n+-+>\s?\S?.*\s?)+)\s*\*\//gm;
+        this.bulletsSignatureRegex = /-+>\s*\S*.*\n*/g;
         // this.supportedFiles = ['.ts', '.tsx', '.js', '.jsx'];
         this.store = [];
         this.codeBaseLocation = path.resolve(this.cwd, 'src');
@@ -102,8 +102,10 @@ class taskTracker{
                     continue;
                 }
                 const todoItems = commentMatchArray[0].match(this.bulletsSignatureRegex) as RegExpMatchArray;
+                console.log('to do items',todoItems);
                 this.store.push(...todoItems);
             }
+            console.log(this.store)
 
 
             this.storeTasksEvent.emit('storeTasks');
@@ -159,18 +161,25 @@ class taskTracker{
 
     }
 
-    public async getTasksToDisplay():Promise<string[] | null>{
+    public async getTasksToDisplay(options?:{display:boolean}):Promise<string[] | null | void>{
         try{
             CLIExecutor.logProgress('started getting tasks to display', 'working');
             const storedContent = await taskTracker.readOperations(this.tasksLocation, {stream:false}) as string;
             const tasksArray = JSON.parse(storedContent) as StoreStructure;
-            return tasksArray.data;
+            const data = tasksArray.data;
+            if(options?.display === true){
+                taskTracker.display(data);
+                return
+            }
+            return data;
         }
         catch(err){
             const message = 'an error occurred while displaying tasks';
             return null;
         }
     };
+
+
 
     public async shakeTree():Promise<void>{
         try{
@@ -249,6 +258,31 @@ class taskTracker{
             const message = 'an error occurred while deleting tasks from store';
             console.error(message, err);
         }
+    }
+
+    static display(tasks:string[]){
+        tasks.forEach((task)=>{
+            const splitItems = task.split('>');
+            const target = splitItems[0];
+            if(target.length <= 3){
+                const colour: ForegroundColorName = 'whiteBright';
+                console.log(chalk[colour](task));
+
+            }
+            if(target.length > 3 && target.length <= 5){
+                const colour:ForegroundColorName = 'yellowBright';
+                console.log(chalk[colour](task));
+
+            }
+            if(target.length > 6){
+                const colour:ForegroundColorName = 'redBright';
+                console.log(chalk[colour](task));
+            }
+
+
+        })
+
+
     }
 
 
