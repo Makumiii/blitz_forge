@@ -29,7 +29,7 @@ class taskTracker{
 
     constructor(){
         this.cwd = process.cwd();
-        this.commentSignatureRegex = /^(\/\*)(\s)?((->)\s?\S*)+\2?(\*\/)$/gm;
+        this.commentSignatureRegex = /^(\/\*)(\s)?((->)\s?\S*)+\2?(\*\/)$/m;
         this.bulletsSignatureRegex = /^((->)\s?\S*)$/gm
         // this.supportedFiles = ['.ts', '.tsx', '.js', '.jsx'];
         this.store = [];
@@ -94,30 +94,15 @@ class taskTracker{
         try{
 
             const entryPointToUse = entryLocation === undefined ? this.codeBaseLocation : entryLocation;
-            const srcContents = await fs.promises.readdir(entryPointToUse, {encoding:"utf-8"});
-
-            for(const content of srcContents){
-                const contentPath = path.resolve(entryPointToUse, content);
-                const contentType = (await fs.promises.stat(contentPath)).isDirectory()
-                if(await taskTracker.isSupportedFile(contentPath)){
-                    const fileContent = await taskTracker.readOperations(contentPath, {stream:false}) as string;
-                    const firstFoundMatch:RegExpExecArray | null = this.commentSignatureRegex.exec(fileContent);
-                    if(firstFoundMatch !== null){
-                        const matchString = firstFoundMatch[0];
-                        const todoItemsMatch:RegExpMatchArray | null = matchString.match(this.bulletsSignatureRegex)
-                        if(todoItemsMatch !== null){
-                            this.store.push(...todoItemsMatch);
-                        }
-                    }
-                }else if((await fs.promises.stat(contentPath)).isDirectory()){
-                    await this.searchTasksInCB(contentPath);
-                }else{
-
-                    throw new Error(`an unexpected exception occurred. Item is neither a dir or file or is corrupted: ${contentPath}`);
-                }
-
-
+            const files = await taskTracker.traverseDirTree(entryPointToUse,{result:true}) as string[];
+            for(const file in files){
+                const fileContent = await taskTracker.readOperations(file, {stream:false}) as string;
+                const commentString = fileContent.match(this.commentSignatureRegex) as RegExpMatchArray;
+                const todoItems = commentString[0].match(this.bulletsSignatureRegex) as RegExpMatchArray;
+                this.store.push(...todoItems);
             }
+
+
             this.storeTasksEvent.emit('storeTasks');
         }
         catch(err){
@@ -186,16 +171,8 @@ class taskTracker{
     public async shakeTree(target?:string):Promise<void>{
         try{
             const targetLocation = target === undefined ? this.codeBaseLocation : target;
-            const targetLocationContent = fs.promises.readdir(targetLocation, {encoding: 'utf-8'});
-            for(const content of targetLocation){
-                const contentLocation = path.resolve(targetLocation , content);
-                if((await fs.promises.stat(contentLocation)).isFile()){
-                    const fileCont = await taskTracker.readOperations(contentLocation, {stream:false}) as string;
-                    const modifiedCont = fileCont.replace(this.commentSignatureRegex, '');
-                    await taskTracker.writeOperations(contentLocation,modifiedCont,{stream:false});
-                }
-                await this.shakeTree(contentLocation);
-            }
+
+
         }
         catch(err){
             const message = 'an error occurred while shaking taskTree in codebase';
@@ -203,7 +180,7 @@ class taskTracker{
         }
     }
 
-    static async traverseDirTree(treeLocation:string, result?:boolean,callback?:(result:string[])=>void):Promise<void | string []>{
+    static async traverseDirTree(treeLocation:string, options?:{result:boolean},callback?:(result:string[])=>void):Promise<void | string []>{
         try{
 
              let arraysToReturn: string[] = [];
@@ -220,12 +197,14 @@ class taskTracker{
 
              }
 
-             if(result === true && callback){
+             if(options?.result === true && callback){
                  callback(arraysToReturn);
              }
-            if(result === true){
+            if(options?.result === true){
                 return arraysToReturn;
             }
+
+            throw new Error('wrong function usage');
 
 
         }
