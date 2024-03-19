@@ -6,16 +6,16 @@ import CLIExecutor from "./CLIExecutor.service.js";
 import chalk, {ForegroundColorName} from "chalk";
 
 /*
--> Update the UI layout
--> Add error handling for network requests
--> Refactor the authentication logic
+---------> Update the UI layout
+----> Add error handling for network requests
+---> Refactor the authentication logic
 -> Implement forgot password functionality
--> Style the navigation bar
+---------------> Style the navigation bar
 -> Add unit tests for user authentication
 -> Optimize image loading performance
--> Implement dark mode support
+---------> Implement dark mode support
 -> Update user profile page layout
--> Add loading spinner for async tasks
+----> Add loading spinner for async tasks
 */
 
 
@@ -23,6 +23,11 @@ interface StoreStructure{
     data:string[];
     lastModified:Date | null;
     created:Date | null;
+}
+interface ReturnPs {
+    highP:string[],
+    moderateP:string[],
+    lowP:string[]
 }
 class taskTracker{
     public cwd:string;
@@ -280,29 +285,32 @@ class taskTracker{
 
 
         const sortedTasks = taskTracker.priorityTaskSort(tasks);
-        sortedTasks.forEach((taskGroup, i)=>{
-            taskGroup.forEach((task)=>{
-                if(i === 0){
-                    console.log(chalk[highPColour](task))
-                }
-                if(i === 1){
-                    console.log(chalk[moderatePColour](task))
-                }
-                if(i === 2){
-                    console.log(chalk[lowPColour](task))
-                }
+        for(let key in sortedTasks){
+           let colorToUse:ForegroundColorName = 'whiteBright';
+           if(key === 'highP'){
+               colorToUse = highPColour;
+           }
+           if(key === 'moderateP'){
+               colorToUse = moderatePColour;
+           }
+           if(key === 'lowP'){
+               colorToUse = lowPColour;
+           }
+           const  sortedTask = sortedTasks[key as keyof ReturnPs];
+           sortedTask.forEach((task)=>{
+               console.log(chalk[colorToUse](task));
+           })
 
-            })
 
+        }
 
-        })
 
 
 
 
     }
 
-    static priorityTaskSort(tasksArray:string[]):string[][]{
+    static priorityTaskSort(tasksArray:string[]):ReturnPs{
         let highP:string[] = [];
         let moderateP:string[] = [];
         let lowP:string[] = [];
@@ -324,7 +332,8 @@ class taskTracker{
 
         });
 
-        return [highP, moderateP, lowP];
+
+        return {highP, moderateP , lowP};
 
 
     }

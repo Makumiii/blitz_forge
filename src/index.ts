@@ -1,15 +1,15 @@
 #!/usr/bin/env node
 
 /*
--> Implement caching for frequently accessed data
+----------> Implement caching for frequently accessed data
 -> Add keyboard shortcuts for common actions
--> Fix alignment issues in user dashboard
+-----> Fix alignment issues in user dashboard
 -> Update error messages for clarity
--> Add integration tests for API endpoints
+-------> Add integration tests for API endpoints
 -> Implement pagination for long lists
--> Fix security vulnerabilities
+------> Fix security vulnerabilities
 -> Update color scheme for better contrast
--> Add progress indicator for long-running tasks
+---> Add progress indicator for long-running tasks
 -> Refactor CSS using utility classes
 */
 

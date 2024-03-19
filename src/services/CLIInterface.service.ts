@@ -5,14 +5,14 @@ import rawlist from '@inquirer/rawlist';
 import {input} from "@inquirer/prompts";
 import taskTracker from "./taskTracker.service.js";
 /*
--> Implement drag and drop functionality
--> Add form validation for user input
+-------> Implement drag and drop functionality
+---> Add form validation for user input
 -> Fix responsive design issues
 -> Update font styles
 -> Add support for multiple languages
--> Implement file upload feature
+--------> Implement file upload feature
 -> Add search functionality
--> Fix bug in user registration process
+---> Fix bug in user registration process
 -> Optimize database queries
 -> Refactor code for better readability
 */
