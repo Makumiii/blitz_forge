@@ -5,6 +5,19 @@ import {fileURLToPath} from "node:url";
 import CLIExecutor from "./CLIExecutor.service.js";
 import chalk, {ForegroundColorName} from "chalk";
 
+/*
+-> Update the UI layout
+-> Add error handling for network requests
+-> Refactor the authentication logic
+-> Implement forgot password functionality
+-> Style the navigation bar
+-> Add unit tests for user authentication
+-> Optimize image loading performance
+-> Implement dark mode support
+-> Update user profile page layout
+-> Add loading spinner for async tasks
+*/
+
 
 interface StoreStructure{
     data:string[];
@@ -260,26 +273,31 @@ class taskTracker{
     // make algo sort tasks according to priority
 
     static display(tasks:string[]){
-        tasks.forEach((task)=>{
-            const splitItems = task.split('>');
-            const target = splitItems[0];
-            if(target.length <= 3){
-                const colour: ForegroundColorName = 'whiteBright';
-                console.log(chalk[colour](task));
 
-            }
-            if(target.length > 3 && target.length <= 5){
-                const colour:ForegroundColorName = 'yellowBright';
-                console.log(chalk[colour](task));
+        const highPColour:ForegroundColorName = 'redBright';
+        const moderatePColour:ForegroundColorName = 'blueBright';
+        const lowPColour:ForegroundColorName = 'greenBright';
 
-            }
-            if(target.length > 6){
-                const colour:ForegroundColorName = 'redBright';
-                console.log(chalk[colour](task));
-            }
+
+        const sortedTasks = taskTracker.priorityTaskSort(tasks);
+        sortedTasks.forEach((taskGroup, i)=>{
+            taskGroup.forEach((task)=>{
+                if(i === 0){
+                    console.log(chalk[highPColour](task))
+                }
+                if(i === 1){
+                    console.log(chalk[moderatePColour](task))
+                }
+                if(i === 2){
+                    console.log(chalk[lowPColour](task))
+                }
+
+            })
 
 
         })
+
+
 
 
     }
