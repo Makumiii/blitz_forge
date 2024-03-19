@@ -3,10 +3,7 @@ import * as path from "node:path";
 import * as EventEmitter from "node:events";
 import {fileURLToPath} from "node:url";
 import CLIExecutor from "./CLIExecutor.service.js";
-import {beforeEach} from "node:test";
 import chalk, {ForegroundColorName} from "chalk";
-
-
 
 
 interface StoreStructure{
@@ -260,6 +257,8 @@ class taskTracker{
         }
     }
 
+    // make algo sort tasks according to priority
+
     static display(tasks:string[]){
         tasks.forEach((task)=>{
             const splitItems = task.split('>');
@@ -281,6 +280,33 @@ class taskTracker{
 
 
         })
+
+
+    }
+
+    static priorityTaskSort(tasksArray:string[]):string[][]{
+        let highP:string[] = [];
+        let moderateP:string[] = [];
+        let lowP:string[] = [];
+
+        tasksArray.forEach((task)=>{
+            const [first, second] = task.split('>');
+            if(first.length <= 3 ){
+                lowP.push(task);
+            }
+            if(first.length > 3 && first.length <= 5){
+                moderateP.push(task);
+
+            }
+
+            if(first.length > 5){
+                highP.push(task);
+            }
+
+
+        });
+
+        return [highP, moderateP, lowP];
 
 
     }
