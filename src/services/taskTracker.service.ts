@@ -298,7 +298,8 @@ class taskTracker{
            }
            const  sortedTask = sortedTasks[key as keyof ReturnPs];
            sortedTask.forEach((task)=>{
-               console.log(chalk[colorToUse](task));
+               const [,main] = task.split('>');
+               console.log(chalk[colorToUse](main));
            })
 
 
