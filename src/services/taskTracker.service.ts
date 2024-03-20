@@ -122,7 +122,13 @@ class taskTracker{
                 }
                 const todoItems = commentMatchArray[0].match(this.bulletsSignatureRegex) as RegExpMatchArray;
                 console.log('to do items',todoItems);
-                this.store.push(...todoItems);
+                const todoItemsMod = todoItems.map((item)=>{
+                    return item.concat(`  file: ${file}`);
+
+                })
+
+
+                this.store.push(...todoItemsMod);
             }
             console.log(this.store)
 
