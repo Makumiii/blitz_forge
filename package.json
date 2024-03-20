@@ -42,13 +42,15 @@
     "commander": "^12.0.0",
     "enquirer": "^2.4.1",
     "express": "^4.18.2",
-    "inquirer": "^9.2.15"
+    "inquirer": "^9.2.15",
+    "terminal-link": "^3.0.0"
   },
   "devDependencies": {
     "@types/chalk": "^2.2.0",
     "@types/commander": "^2.12.2",
     "@types/inquirer": "^9.0.7",
     "@types/node": "^20.11.20",
+    "@types/terminal-link": "^1.2.0",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "eslint": "^8.57.0",
     "eslint-config-standard-with-typescript": "^43.0.1",

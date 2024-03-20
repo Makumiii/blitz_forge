@@ -111,7 +111,7 @@ class taskTracker{
     public async searchTasksInCB():Promise<void>{
         try{
             CLIExecutor.logProgress('searchingTasksInCB started ...', 'working');
-
+            await this.deleteTasksFromStore();
             const entryPointToUse = process.cwd();
             const files = await taskTracker.traverseDirTree(entryPointToUse,{result:true}) as string[];
             for(const file of files){
