@@ -18,6 +18,10 @@ import chalk, {ForegroundColorName} from "chalk";
 ----> Add loading spinner for async tasks
 */
 
+interface GroupedtasksData{
+    fileLocation:string,
+    data:string[]
+}
 
 interface StoreStructure{
     data:string[];
