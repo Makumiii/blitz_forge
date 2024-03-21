@@ -4,19 +4,9 @@ import * as EventEmitter from "node:events";
 import {fileURLToPath} from "node:url";
 import CLIExecutor from "./CLIExecutor.service.js";
 import chalk, {ForegroundColorName} from "chalk";
+import terminalLink from 'terminal-link';
 
-/*
----------> Update the UI layout
-----> Add error handling for network requests
----> Refactor the authentication logic
--> Implement forgot password functionality
----------------> Style the navigation bar
--> Add unit tests for user authentication
--> Optimize image loading performance
----------> Implement dark mode support
--> Update user profile page layout
-----> Add loading spinner for async tasks
-*/
+
 
 interface GroupedtasksData{
     fileLocation:string,
@@ -33,6 +23,7 @@ interface ReturnPs {
     moderateP:string[],
     lowP:string[]
 }
+const pathToTaskFile = 'file:'
 class taskTracker{
     public cwd:string;
     public commentSignatureRegex:RegExp;
@@ -123,7 +114,7 @@ class taskTracker{
                 const todoItems = commentMatchArray[0].match(this.bulletsSignatureRegex) as RegExpMatchArray;
                 console.log('to do items',todoItems);
                 const todoItemsMod = todoItems.map((item)=>{
-                    return item.concat(`  file: ${file}`);
+                    return item.concat(`  ${pathToTaskFile} ${file}`);
 
                 })
 
@@ -288,6 +279,8 @@ class taskTracker{
     // make algo sort tasks according to priority
 
     static display(tasks:string[]){
+        console.log(terminalLink('test link', 'hello boy'))
+        console.log(terminalLink.isSupported);
 
         const highPColour:ForegroundColorName = 'redBright';
         const moderatePColour:ForegroundColorName = 'blueBright';
@@ -308,7 +301,11 @@ class taskTracker{
            }
            const  sortedTask = sortedTasks[key as keyof ReturnPs];
            sortedTask.forEach((task)=>{
-               const [,main] = task.split('>');
+               const filePath = task.split(pathToTaskFile);
+               const filePathAsLink = terminalLink('file',filePath[1] );
+               const newTask = `${filePath[0]} ${filePathAsLink}`;
+
+               const [,main] = newTask.split('>');
                console.log(chalk[colorToUse](main));
            })
 

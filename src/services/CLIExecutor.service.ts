@@ -6,18 +6,7 @@ import chalk, {BackgroundColorName, ForegroundColorName} from 'chalk'
 import {fileURLToPath} from "node:url";
 import packageJson from '../../package.json';
 
-/*
---------> Add feature to share tasks with other users
--> Implement real-time notifications
-----------> Fix memory leaks in the application
--> Update third-party libraries to latest versions
--> Add support for emoji reactions
-------> Improve accessibility for screen readers
--> Update documentation for API endpoints
-----> Implement user role management
--> Add option to customize user profile
--> Fix issue with email verification process
-*/
+
 
 
 
