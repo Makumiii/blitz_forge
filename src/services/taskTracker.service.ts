@@ -7,12 +7,9 @@ import chalk, {ForegroundColorName} from "chalk";
 import terminalLink from 'terminal-link';
 
 /*
-->maks jane john jane maks
-->maks jane john jane maks
+------> fs.watch() or fs.watchFile() file for a system to watch changes to files specifically task tracker comments
+------> work on making sure displaying task is upto date after tasks have been marked as done by user to avoid stale data
 
-
-
-->maks jane john jane maks
 */
 
 
@@ -297,8 +294,7 @@ class taskTracker{
     // make algo sort tasks according to priority
 
     static display(tasks:string[]){
-        console.log(terminalLink('test link', 'hello boy'))
-        console.log(terminalLink.isSupported);
+
 
         const highPColour:ForegroundColorName = 'redBright';
         const moderatePColour:ForegroundColorName = 'blueBright';
@@ -318,13 +314,14 @@ class taskTracker{
                colorToUse = lowPColour;
            }
            const  sortedTask = sortedTasks[key as keyof ReturnPs];
-           sortedTask.forEach((task)=>{
+           sortedTask.forEach((task, i)=>{
                const filePath = task.split(pathToTaskFile);
                const filePathAsLink = terminalLink('file',filePath[1] );
                const newTask = `${filePath[0]} ${filePathAsLink}`;
 
                const [,main] = newTask.split('>');
-               console.log(chalk[colorToUse](main));
+               const newMain = `${i + 1 }. ${main}`
+               console.log(chalk[colorToUse](newMain));
            })
 
 

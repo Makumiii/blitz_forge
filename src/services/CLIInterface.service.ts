@@ -9,6 +9,8 @@ import taskTracker from "./taskTracker.service.js";
 
 
 
+
+
 class CLIInterface{
     private program :Command;
     private programVersion: string;
@@ -136,6 +138,7 @@ class CLIInterface{
                     return;
                 }
                 if(options.get){
+
                     await this.taskTrackerClass.getTasksToDisplay({display:true}) ;
                     return
                 }
