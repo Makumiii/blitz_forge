@@ -7,10 +7,15 @@ import chalk, {ForegroundColorName} from "chalk";
 import terminalLink from 'terminal-link';
 
 /*
---!>get a cat get a dog
-->get a mouse get a rat
-->get a wife get a girl
+->maks jane john jane maks
+->maks jane john jane maks
+
+
+
+->maks jane john jane maks
 */
+
+
 
 
 
@@ -41,11 +46,10 @@ class taskTracker{
     readonly tasksLocation:string;
     readonly storeTasksEvent:EventEmitter;
     public doneTasksRegex:RegExp;
-
     constructor(){
         this.cwd = process.cwd();
         this.commentSignatureRegex =  /\/\*\s*((\n+-+>\s?\S?.*\s?)+)\s*\*\//gm;
-        this.bulletsSignatureRegex = /-+>\s*\S*.*\n*/g;
+        this.bulletsSignatureRegex = /-+!?>\s*\S*.*\n*/g;
         // this.supportedFiles = ['.ts', '.tsx', '.js', '.jsx'];
         this.store = [];
         this.codeBaseLocation = path.resolve(this.cwd, 'src');
@@ -217,10 +221,11 @@ class taskTracker{
                 const fileContent = await taskTracker.readOperations(file,{stream:false} ) as string;
                 const regexToMatch:RegExp = options?.doneTasksOnly === true ? this.doneTasksRegex : this.commentSignatureRegex;
                 const matches = fileContent.match(regexToMatch);
+                console.log(matches);
                 if(matches == null){
                     continue;
                 }
-                const newFileContent = fileContent.replace(this.commentSignatureRegex, '');
+                const newFileContent = fileContent.replace(regexToMatch, '');
                 await taskTracker.writeOperations(file, newFileContent, {stream:false});
 
             }

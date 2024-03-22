@@ -132,7 +132,8 @@ class CLIInterface{
                     return;
                 }
                 if(options.shakedone){
-                    await this.taskTrackerClass.shakeTree({doneTasksOnly:true})
+                    await this.taskTrackerClass.shakeTree({doneTasksOnly:true});
+                    return;
                 }
                 if(options.get){
                     await this.taskTrackerClass.getTasksToDisplay({display:true}) ;
