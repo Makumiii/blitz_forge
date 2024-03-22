@@ -34,6 +34,7 @@ class taskTracker{
     readonly __dirName:string;
     readonly tasksLocation:string;
     readonly storeTasksEvent:EventEmitter;
+    public doneTasksRegex:RegExp;
 
     constructor(){
         this.cwd = process.cwd();
@@ -45,6 +46,8 @@ class taskTracker{
         this.__dirName = path.dirname(fileURLToPath(import.meta.url))
         this.tasksLocation = path.resolve(this.__dirName,'..', '..', 'userData', 'taskTracker', 'tasks.data.json');
         this.storeTasksEvent = new EventEmitter.EventEmitter().on('storeTasks',()=>this.storeTasksHandler(this.tasksLocation));
+        this.doneTasksRegex = /-+!>\s*\S*.*\n*/g;
+
 
 
     }
@@ -122,6 +125,8 @@ class taskTracker{
                 this.store.push(...todoItemsMod);
             }
             console.log(this.store)
+
+
 
 
             this.storeTasksEvent.emit('storeTasks');
@@ -345,9 +350,6 @@ class taskTracker{
 
 
     }
-
-
-
 
 
 }
