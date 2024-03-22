@@ -6,6 +6,12 @@ import CLIExecutor from "./CLIExecutor.service.js";
 import chalk, {ForegroundColorName} from "chalk";
 import terminalLink from 'terminal-link';
 
+/*
+--!>get a cat get a dog
+->get a mouse get a rat
+->get a wife get a girl
+*/
+
 
 
 interface GroupedtasksData{

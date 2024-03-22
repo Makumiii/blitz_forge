@@ -118,6 +118,7 @@ class CLIInterface{
             .option('-s --shake', 'shake tree to remove all todo in given cwd')
             .option('-g --get', 'get tasks in store')
             .option('-rm --remove', 'remove tasks from store')
+            .option('-sd --shakedone', 'shake tree to remove tasks marked as already done')
             .action(async(options)=>{
                 if(options.build){
                     await this.taskTrackerClass.searchTasksInCB();
@@ -129,6 +130,9 @@ class CLIInterface{
                 if(options.shake){
                     await this.taskTrackerClass.shakeTree();
                     return;
+                }
+                if(options.shakedone){
+                    await this.taskTrackerClass.shakeTree({doneTasksOnly:true})
                 }
                 if(options.get){
                     await this.taskTrackerClass.getTasksToDisplay({display:true}) ;
