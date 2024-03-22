@@ -202,19 +202,21 @@ class taskTracker{
 
 
 
-    public async shakeTree():Promise<void>{
+    public async shakeTree(options?:{doneTasksOnly:boolean}):Promise<void>{
         try{
             CLIExecutor.logProgress('shaking Tree started', 'working')
             const targetLocation= process.cwd();
             const files =  await taskTracker.traverseDirTree(targetLocation,{result:true}) as string[];
             for (const file of files){
                 const fileContent = await taskTracker.readOperations(file,{stream:false} ) as string;
-                const matches = fileContent.match(this.commentSignatureRegex);
+                const regexToMatch:RegExp = options?.doneTasksOnly === true ? this.doneTasksRegex : this.commentSignatureRegex;
+                const matches = fileContent.match(regexToMatch);
                 if(matches == null){
                     continue;
                 }
                 const newFileContent = fileContent.replace(this.commentSignatureRegex, '');
                 await taskTracker.writeOperations(file, newFileContent, {stream:false});
+
             }
             await this.deleteTasksFromStore();
 
@@ -350,6 +352,8 @@ class taskTracker{
 
 
     }
+
+
 
 
 }
