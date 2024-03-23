@@ -8,13 +8,8 @@ import terminalLink from 'terminal-link';
 
 /*
 ------> fs.watch() or fs.watchFile() file for a system to watch changes to files specifically task tracker comments
-------> work on making sure displaying task is upto date after tasks have been marked as done by user to avoid stale data
-
+---> have a build in stat system for tracking user efficiency at doing tasks
 */
-
-
-
-
 
 interface GroupedtasksData{
     fileLocation:string,
@@ -302,6 +297,8 @@ class taskTracker{
 
 
         const sortedTasks = taskTracker.priorityTaskSort(tasks);
+        let assignedTaskNumber = 1;
+
         for(let key in sortedTasks){
            let colorToUse:ForegroundColorName = 'whiteBright';
            if(key === 'highP'){
@@ -316,11 +313,14 @@ class taskTracker{
            const  sortedTask = sortedTasks[key as keyof ReturnPs];
            sortedTask.forEach((task, i)=>{
                const filePath = task.split(pathToTaskFile);
-               const filePathAsLink = terminalLink('file',filePath[1] );
-               const newTask = `${filePath[0]} ${filePathAsLink}`;
+               const relativePath = path.relative(process.cwd(), filePath[1]);
+               console.log(relativePath);
+               const filePathAsLink = chalk["bgWhiteBright"](terminalLink('file',relativePath ));
+               const newTask = `${filePath[0].toUpperCase()} ${filePathAsLink}`;
 
                const [,main] = newTask.split('>');
-               const newMain = `${i + 1 }. ${main}`
+               const newMain = `${assignedTaskNumber }. ${main}`;
+               assignedTaskNumber++;
                console.log(chalk[colorToUse](newMain));
            })
 
