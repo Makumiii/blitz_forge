@@ -4,6 +4,7 @@ import select, { Separator } from '@inquirer/select';
 import rawlist from '@inquirer/rawlist';
 import {input} from "@inquirer/prompts";
 import taskTracker from "./taskTracker.service.js";
+import ProcessTimer from "../utils/processTimer.util.js";
 
 
 
@@ -125,8 +126,11 @@ class CLIInterface{
             .option('-sd --shakedone', 'shake tree to remove tasks marked as already done')
             .action(async(options)=>{
                 if(options.build){
+                    const timer = new ProcessTimer();
+
                     await this.taskTrackerClass.searchTasksInCB();
                     await this.taskTrackerClass.getTasksToDisplay({display:true});
+                    timer.displayElapsedTime();
 
                     return
 
