@@ -5,6 +5,16 @@ import {exec} from "node:child_process";
 import chalk, {BackgroundColorName, ForegroundColorName} from 'chalk'
 import {fileURLToPath} from "node:url";
 import packageJson from '../../package.json';
+/*
+->please just work
+->been working on this bug for the past 5 hours or smth
+->mahn it is so f'ing annoying
+->I don't even know what the issue is
+->other test data works just fine but not this one
+->what new thing do I even try?
+->data is as expected on logging just before writing to file
+*/
+
 
 
 

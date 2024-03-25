@@ -5,16 +5,6 @@ import {fileURLToPath} from "node:url";
 import CLIExecutor from "./CLIExecutor.service.js";
 import chalk, {ForegroundColorName} from "chalk";
 import terminalLink from 'terminal-link';
-
-
-
-
-
-interface GroupedtasksData{
-    fileLocation:string,
-    data:string[]
-}
-
 interface StoreStructure{
     data:string[];
     lastModified:Date | null;
@@ -40,12 +30,12 @@ class taskTracker{
     constructor(){
         this.cwd = process.cwd();
         this.commentSignatureRegex =  /\/\*\s*((\n+-+>\s?\S?.*\s?)+)\s*\*\//gm;
-        this.bulletsSignatureRegex = /-+!?>\s*\S*.*\n*/g;
+        this.bulletsSignatureRegex = /-+!?>\s*\S*.*/;
         // this.supportedFiles = ['.ts', '.tsx', '.js', '.jsx'];
         this.store = [];
         this.codeBaseLocation = path.resolve(this.cwd, 'src');
         this.__dirName = path.dirname(fileURLToPath(import.meta.url))
-        this.tasksLocation = path.resolve(this.__dirName,'..', '..', 'userData', 'taskTracker', 'tasks.data.json');
+        this.tasksLocation = path.resolve(this.__dirName,'..', '..', 'userData', 'tasks.data.json');
         this.storeTasksEvent = new EventEmitter.EventEmitter().on('storeTasks',()=>this.storeTasksHandler(this.tasksLocation));
         this.doneTasksRegex = /-+!>\s*\S*.*\n*/g;
 
@@ -74,7 +64,9 @@ class taskTracker{
         try{
             const streamable = options?.stream === true;
             if(!streamable){
-                await fs.promises.writeFile(writePath,  data, {encoding:"utf-8"});
+
+                console.log('the data is :', data);
+                await fs.promises.writeFile(writePath,data,{encoding:"utf-8"});
                 return;
             }
             return fs.createWriteStream(writePath,{encoding:"utf-8"});
@@ -86,7 +78,7 @@ class taskTracker{
         }
     };
 
-    public async pipeStreams(writeStream:fs.WriteStream, readStream:fs.ReadStream, destination:string):Promise<{done:boolean}>{
+    public async pipeStreams(writeStream:fs.WriteStream, readStream:fs.ReadStream):Promise<{done:boolean}>{
         try{
             readStream.pipe(writeStream)
             writeStream.on('finish', ()=>{
@@ -124,6 +116,7 @@ class taskTracker{
 
                 this.store.push(...todoItemsMod);
             }
+            console.log('tasks store', this.store);
             this.storeTasksEvent.emit('storeTasks');
             CLIExecutor.logProgress('storing tasks done', 'success');
         }
@@ -135,19 +128,7 @@ class taskTracker{
     private async storeTasksHandler(location:string):Promise<{success:boolean}>{
 
         try{
-
-            const fileContent = await taskTracker.readOperations(location, {stream:false}) as string;
-            const parsedData = JSON.parse(fileContent) as StoreStructure;
-            parsedData.data.push(...this.store);
-            const initiallyCreated = parsedData.created !== null;
-            if(!initiallyCreated){
-                parsedData.created = new Date();
-            }
-
-            parsedData.lastModified = new Date();
-
-            await taskTracker.writeOperations(this.tasksLocation, JSON.stringify(parsedData), {stream:false});
-            return {success:true};
+            return {success:true}
         }
         catch(err){
             const message = 'an error occurred while storing tasks';
@@ -263,14 +244,7 @@ class taskTracker{
     public async deleteTasksFromStore():Promise<void>{
         try{
             CLIExecutor.logProgress('deleting tasks...', "working")
-            const refreshedCont:StoreStructure = {
-                data:[],
-                created:null,
-                lastModified:null
-            };
-            await taskTracker.writeOperations(this.tasksLocation,JSON.stringify(refreshedCont), {stream:false});
             CLIExecutor.logProgress('deleting tasks complete', 'success');
-
         }
         catch(err){
             const message = 'an error occurred while deleting tasks from store';
@@ -352,8 +326,6 @@ class taskTracker{
 
 
     }
-
-
 
 
 }

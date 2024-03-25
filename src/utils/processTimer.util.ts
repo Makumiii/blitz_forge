@@ -1,21 +1,37 @@
 import chalk, {ForegroundColorName} from "chalk";
+import EventEmitter from 'events';
+const timeOutTime = 0.5;
+
+
+
 
 
 
 class ProcessTimer{
-    public cwd : string;
     public elapsedTime : number;
     public timeNow : Date;
-    public timeOut : number  // to indicate minutes
+    public timer :NodeJS.Timeout | undefined;
+    public doneEmitter:EventEmitter;
+    public timeInMs : number
+    public logColour : ForegroundColorName;
 
 
     constructor() {
-        this.cwd = process.cwd();
         this.elapsedTime = 0;
         this.timeNow = new Date();
-        process.on('beforeExit',()=>{this.displayElapsedTime()} );
-        this.terminateProcess();
-        this.timeOut = 3
+        this.timeInMs = (():number=>{
+            return timeOutTime * 60 * 1000
+        })();
+        this.logColour = 'redBright';
+        this.timer = setTimeout(()=>{
+            console.log(chalk[this.logColour]('task killed for exceeding timeout'));
+            process.exit(1);
+
+        },this.timeInMs);
+        this.doneEmitter = new EventEmitter()
+        this.doneEmitter.on('done',()=>{
+            this.displayElapsedTime();
+        } )
 
     }
 
@@ -26,25 +42,14 @@ class ProcessTimer{
     }
     public displayElapsedTime():void{
         this.StopTimer();
-        const logColour :ForegroundColorName = 'magentaBright'
+        const logColour :ForegroundColorName = 'magentaBright';
         console.log(chalk[logColour]('done in',this.elapsedTime / 1000, 's'));
-    }
-    public terminateProcess():void{
-
-        const timeInMs : number = (():number=>{
-            return this.timeOut * 60 * 100
-        })();
-        const logColour:ForegroundColorName = 'redBright'
-        setTimeout(()=>{
-            console.log(chalk[logColour]('task killed for exceeding timeout'));
-            process.exit(1);
-
-        },timeInMs)
+        process.exit(0);
     }
 
-
-
-
-
+    public done():void{
+        clearTimeout(this.timer)
+        this.doneEmitter.emit('done');
+    }
 }
 export default ProcessTimer;

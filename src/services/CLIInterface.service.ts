@@ -6,6 +6,8 @@ import {input} from "@inquirer/prompts";
 import taskTracker from "./taskTracker.service.js";
 import ProcessTimer from "../utils/processTimer.util.js";
 
+
+
 class CLIInterface{
     private program :Command;
     private programVersion: string;
@@ -120,36 +122,36 @@ class CLIInterface{
             .option('-rm --remove', 'remove tasks from store')
             .option('-sd --shakedone', 'shake tree to remove tasks marked as already done')
             .action(async(options)=>{
+                const manageProcessSession = new ProcessTimer();
                 if(options.build){
-                    new ProcessTimer();
 
                     await this.taskTrackerClass.searchTasksInCB();
                     await this.taskTrackerClass.getTasksToDisplay({display:true});
-
+                    manageProcessSession.done()
                     return
 
                 }
                 if(options.shake){
-                    new ProcessTimer()
                     await this.taskTrackerClass.shakeTree();
+                    manageProcessSession.done();
                     return;
                 }
                 if(options.shakedone){
-                    new ProcessTimer()
                     await this.taskTrackerClass.shakeTree({doneTasksOnly:true});
+                    manageProcessSession.done();
                     return;
                 }
                 if(options.get){
-                    new ProcessTimer()
-
-                    await this.taskTrackerClass.getTasksToDisplay({display:true}) ;
+                    await this.taskTrackerClass.getTasksToDisplay({display:true});
+                    manageProcessSession.done();
                     return
                 }
                 if(options.remove){
-                    new ProcessTimer()
                     await this.taskTrackerClass.deleteTasksFromStore();
+                    manageProcessSession.done();
                     return
                 }
+                manageProcessSession.done();
                 console.log('option not specified or invalid');
 
             })
