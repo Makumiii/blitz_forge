@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import * as path from "node:path";
-import * as EventEmitter from "node:events";
+import EventEmitter from "node:events";
 import {fileURLToPath} from "node:url";
 import CLIExecutor from "./CLIExecutor.service.js";
 import chalk, {ForegroundColorName} from "chalk";
@@ -8,7 +8,6 @@ import terminalLink from 'terminal-link';
 interface StoreStructure{
     data:string[];
     lastModified:Date | null;
-    created:Date | null;
 }
 interface ReturnPs {
     highP:string[],
@@ -25,18 +24,18 @@ class taskTracker{
     public codeBaseLocation:string;
     readonly __dirName:string;
     readonly tasksLocation:string;
-    readonly storeTasksEvent:EventEmitter;
+    // readonly storeTasksEvent:EventEmitter;
     public doneTasksRegex:RegExp;
     constructor(){
         this.cwd = process.cwd();
         this.commentSignatureRegex =  /\/\*\s*((\n+-+>\s?\S?.*\s?)+)\s*\*\//gm;
-        this.bulletsSignatureRegex = /-+!?>\s*\S*.*/;
-        // this.supportedFiles = ['.ts', '.tsx', '.js', '.jsx'];
+        this.bulletsSignatureRegex = /-+!?>\s*\S*.*/gm;
         this.store = [];
         this.codeBaseLocation = path.resolve(this.cwd, 'src');
         this.__dirName = path.dirname(fileURLToPath(import.meta.url))
         this.tasksLocation = path.resolve(this.__dirName,'..', '..', 'userData', 'tasks.data.json');
-        this.storeTasksEvent = new EventEmitter.EventEmitter().on('storeTasks',()=>this.storeTasksHandler(this.tasksLocation));
+        // this.storeTasksEvent = new EventEmitter();
+        // this.storeTasksEvent.on('storeTasks',()=>this.storeTasksHandler(this.tasksLocation));
         this.doneTasksRegex = /-+!>\s*\S*.*\n*/g;
 
 
@@ -98,7 +97,7 @@ class taskTracker{
     public async searchTasksInCB():Promise<void>{
         try{
             CLIExecutor.logProgress('searchingTasksInCB started ...', 'working');
-            await this.deleteTasksFromStore();
+            // await this.deleteTasksFromStore();
             const entryPointToUse = process.cwd();
             const files = await taskTracker.traverseDirTree(entryPointToUse,{result:true}) as string[];
             for(const file of files){
@@ -108,16 +107,17 @@ class taskTracker{
                     continue;
                 }
                 const todoItems = commentMatchArray[0].match(this.bulletsSignatureRegex) as RegExpMatchArray;
+                console.log(todoItems);
                 const todoItemsMod = todoItems.map((item)=>{
                     return item.concat(`  ${pathToTaskFile} ${file}`);
 
                 })
+                console.log('todo items mod:',todoItemsMod)
 
 
                 this.store.push(...todoItemsMod);
             }
-            console.log('tasks store', this.store);
-            this.storeTasksEvent.emit('storeTasks');
+            await this.storeTasks(this.tasksLocation);
             CLIExecutor.logProgress('storing tasks done', 'success');
         }
         catch(err){
@@ -125,9 +125,19 @@ class taskTracker{
             console.error(message, err);
         }
     };
-    private async storeTasksHandler(location:string):Promise<{success:boolean}>{
-
+    private async storeTasks(location:string):Promise<{success:boolean}>{
         try{
+            console.log('storing events has begun');
+            console.log('store value in storeTasksHandler:', this.store);
+            const dataToBeStored:StoreStructure = {
+                data:this.store,
+                lastModified:new Date()
+
+            }
+            const json = JSON.stringify(dataToBeStored);
+            console.log('json',json);
+            console.log(this.tasksLocation)
+            await fs.promises.writeFile(this.tasksLocation,json,{encoding:"utf-8"});
             return {success:true}
         }
         catch(err){
