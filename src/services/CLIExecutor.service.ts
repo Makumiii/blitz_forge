@@ -7,6 +7,7 @@ import {fileURLToPath} from "node:url";
 import packageJson from '../../package.json';
 
 
+
 type Temps = 'ts' | 'tailwind' | 'eslint' | 'nodemon' | 'postcss';
 export type Project = 'react' | 'node' | 'webserver' | 'cli';
 const projectTypes: Project[] = ["react", "node", "cli", "webserver"];

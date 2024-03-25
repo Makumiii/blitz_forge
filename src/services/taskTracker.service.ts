@@ -6,10 +6,9 @@ import CLIExecutor from "./CLIExecutor.service.js";
 import chalk, {ForegroundColorName} from "chalk";
 import terminalLink from 'terminal-link';
 
-/*
-------> fs.watch() or fs.watchFile() file for a system to watch changes to files specifically task tracker comments
----> have a build in stat system for tracking user efficiency at doing tasks
-*/
+
+
+
 
 interface GroupedtasksData{
     fileLocation:string,
@@ -117,7 +116,6 @@ class taskTracker{
                     continue;
                 }
                 const todoItems = commentMatchArray[0].match(this.bulletsSignatureRegex) as RegExpMatchArray;
-                console.log('to do items',todoItems);
                 const todoItemsMod = todoItems.map((item)=>{
                     return item.concat(`  ${pathToTaskFile} ${file}`);
 
@@ -126,11 +124,6 @@ class taskTracker{
 
                 this.store.push(...todoItemsMod);
             }
-            console.log(this.store)
-
-
-
-
             this.storeTasksEvent.emit('storeTasks');
             CLIExecutor.logProgress('storing tasks done', 'success');
         }
@@ -213,7 +206,6 @@ class taskTracker{
                 const fileContent = await taskTracker.readOperations(file,{stream:false} ) as string;
                 const regexToMatch:RegExp = options?.doneTasksOnly === true ? this.doneTasksRegex : this.commentSignatureRegex;
                 const matches = fileContent.match(regexToMatch);
-                console.log(matches);
                 if(matches == null){
                     continue;
                 }

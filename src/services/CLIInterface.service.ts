@@ -6,14 +6,6 @@ import {input} from "@inquirer/prompts";
 import taskTracker from "./taskTracker.service.js";
 import ProcessTimer from "../utils/processTimer.util.js";
 
-
-
-
-
-
-
-
-
 class CLIInterface{
     private program :Command;
     private programVersion: string;
@@ -103,9 +95,12 @@ class CLIInterface{
                 .option('-d, --dir', 'specifies directory type')
                 .action(async (load,options):Promise<void>=>{
                     if(options.file !== true && options.dir !== true){
+                        new ProcessTimer()
                         console.log('type flag was not specified');
                         return;
                     }
+                    new ProcessTimer()
+
                     const fileType = options.file ? 'file' : 'dir';
 
                     await this.commandsExecutorClass.quickTree(load,fileType);
@@ -126,29 +121,32 @@ class CLIInterface{
             .option('-sd --shakedone', 'shake tree to remove tasks marked as already done')
             .action(async(options)=>{
                 if(options.build){
-                    const timer = new ProcessTimer();
+                    new ProcessTimer();
 
                     await this.taskTrackerClass.searchTasksInCB();
                     await this.taskTrackerClass.getTasksToDisplay({display:true});
-                    timer.displayElapsedTime();
 
                     return
 
                 }
                 if(options.shake){
+                    new ProcessTimer()
                     await this.taskTrackerClass.shakeTree();
                     return;
                 }
                 if(options.shakedone){
+                    new ProcessTimer()
                     await this.taskTrackerClass.shakeTree({doneTasksOnly:true});
                     return;
                 }
                 if(options.get){
+                    new ProcessTimer()
 
                     await this.taskTrackerClass.getTasksToDisplay({display:true}) ;
                     return
                 }
                 if(options.remove){
+                    new ProcessTimer()
                     await this.taskTrackerClass.deleteTasksFromStore();
                     return
                 }
