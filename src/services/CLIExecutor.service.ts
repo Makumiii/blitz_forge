@@ -5,6 +5,19 @@ import {exec} from "node:child_process";
 import chalk, {BackgroundColorName, ForegroundColorName} from 'chalk'
 import {fileURLToPath} from "node:url";
 import packageJson from '../../package.json';
+/*
+
+->add functionality to watch files with tasks comment and trigger events on changes
+----->refactor some minor code
+->add functionality to watch files with tasks comment and trigger events on changes
+->refactor some minor code
+--->add functionality to watch files with tasks comment and trigger events on changes
+->refactor some minor code
+------>add functionality to watch files with tasks comment and trigger events on changes
+---->refactor some minor code
+
+
+*/
 
 
 

@@ -1,10 +1,22 @@
 import {Command} from 'commander';
 import CLIExecutor, {Project} from "./CLIExecutor.service.js";
-import select, { Separator } from '@inquirer/select';
 import rawlist from '@inquirer/rawlist';
 import {input} from "@inquirer/prompts";
 import taskTracker from "./taskTracker.service.js";
 import ProcessTimer from "../utils/processTimer.util.js";
+/*
+
+
+
+->add functionality to watch files with tasks comment and trigger events on changes
+->refactor some minor code
+--->add functionality to watch files with tasks comment and trigger events on changes
+->refactor some minor code
+------>add functionality to watch files with tasks comment and trigger events on changes
+---->refactor some minor code
+
+
+*/
 
 
 

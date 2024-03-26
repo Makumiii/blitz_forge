@@ -1,46 +1,57 @@
 import * as fs from "fs";
 import * as path from "node:path";
-import EventEmitter from "node:events";
 import {fileURLToPath} from "node:url";
 import CLIExecutor from "./CLIExecutor.service.js";
 import chalk, {ForegroundColorName} from "chalk";
 import terminalLink from 'terminal-link';
+
+/*
+
+->add functionality to watch files with tasks comment and trigger events on changes
+----->refactor some minor code
+->add functionality to watch files with tasks comment and trigger events on changes
+->refactor some minor code
+--->add functionality to watch files with tasks comment and trigger events on changes
+->refactor some minor code
+------>add functionality to watch files with tasks comment and trigger events on changes
+---->refactor some minor code
+
+
+*/
 interface StoreStructure{
     data:string[];
     lastModified:Date | null;
-    matchedFiles:[];
+    matchedFiles:string[];
 }
 interface ReturnPs {
     highP:string[],
     moderateP:string[],
     lowP:string[]
 }
+interface quickStats{
+    matchedFiles:string[],
+    totalTasks:number,
+
+}
 const fileDelim = 'file:'
 class taskTracker{
     public cwd:string;
     public commentSignatureRegex:RegExp;
-    // public supportedFiles:string[];
     public store:string[];
     public bulletsSignatureRegex:RegExp;
     public codeBaseLocation:string;
     readonly __dirName:string;
     readonly tasksLocation:string;
-    // readonly storeTasksEvent:EventEmitter;
     public doneTasksRegex:RegExp;
     constructor(){
         this.cwd = process.cwd();
-        this.commentSignatureRegex =  /\/\*\s*(\n?-+>\s?\S?.*\s*)+\s*\*\//gm;
+        this.commentSignatureRegex =  /\/\*\s*(\n?-+!?>\s?\S?.*\s*)+\s*\*\//gm;
         this.bulletsSignatureRegex = /-+!?>\s*\S*.*/gm;
         this.store = [];
         this.codeBaseLocation = path.resolve(this.cwd, 'src');
         this.__dirName = path.dirname(fileURLToPath(import.meta.url))
         this.tasksLocation = path.resolve(this.__dirName,'..', '..', 'userData', 'tasks.data.json');
-        // this.storeTasksEvent = new EventEmitter();
-        // this.storeTasksEvent.on('storeTasks',()=>this.storeTasksHandler(this.tasksLocation));
-        this.doneTasksRegex = /-+!>\s*\S*.*\n*/gm;
-
-
-
+        this.doneTasksRegex = /-+!>\s*\S*.*/gm;
     }
 
     static async readOperations(pathToFile:string, option?:{stream:boolean}):Promise<string | null | fs.ReadStream>{
@@ -126,7 +137,8 @@ class taskTracker{
             CLIExecutor.logProgress('storing tasks has begun', 'working')
             const dataToBeStored:StoreStructure = {
                 data:this.store,
-                lastModified:new Date()
+                lastModified:new Date(),
+                matchedFiles:this.retrieveFiles()
 
             }
             const json = JSON.stringify(dataToBeStored);
@@ -250,7 +262,8 @@ class taskTracker{
             CLIExecutor.logProgress('deleting tasks...', "working");
             const data = JSON.stringify({
                 data:[],
-                lastModified:null
+                lastModified:null,
+                matchedFiles:[]
             } as StoreStructure)
             await taskTracker.writeOperations(this.tasksLocation,data, {stream:false})
             CLIExecutor.logProgress('deleting tasks complete', 'success');
@@ -329,10 +342,6 @@ class taskTracker{
 
 
     }
-
-    public async watchFiles(){
-
-    }
     private retrieveFiles():string[]{
         const files = this.store.map((item)=>{
             return item.split(fileDelim)[1].trim();
@@ -341,10 +350,29 @@ class taskTracker{
         files.forEach((file)=>{
             mergedFileLocations.add(file)
         })
+        console.log(Array.from(mergedFileLocations))
         return Array.from(mergedFileLocations);
     }
+    private async quickStats():Promise<quickStats | null>{
+        try{
+            interface quickStats{
+                matchedFiles:string[],
+                totalTasks:number,
 
+            }
+            const json = await taskTracker.readOperations(this.tasksLocation, {stream:false}) as string;
+            const object = JSON.parse(json) as StoreStructure;
+            const matchedFiles = object.matchedFiles, totalTasks = object.data.length;
+            return {matchedFiles, totalTasks}
 
+        }
+        catch(err){
+            const message = 'an error occurred while getting quickStats';
+            console.error(message, err);
+            return null
+
+        }
+    }
 }
 
 export default taskTracker;
