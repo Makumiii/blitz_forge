@@ -1,23 +1,11 @@
 import * as fs from "fs";
 import * as path from "node:path";
 import {fileURLToPath} from "node:url";
-import CLIExecutor from "./CLIExecutor.service.js";
+import Scaffolder from "./scaffolder.service.js";
 import chalk, {ForegroundColorName} from "chalk";
 import terminalLink from 'terminal-link';
 
-/*
 
-->add functionality to watch files with tasks comment and trigger events on changes
------>refactor some minor code
-->add functionality to watch files with tasks comment and trigger events on changes
-->refactor some minor code
---->add functionality to watch files with tasks comment and trigger events on changes
-->refactor some minor code
------->add functionality to watch files with tasks comment and trigger events on changes
----->refactor some minor code
-
-
-*/
 interface StoreStructure{
     data:string[];
     lastModified:Date | null;
@@ -34,7 +22,7 @@ interface quickStats{
 
 }
 const fileDelim = 'file:'
-class taskTracker{
+class TasksHandler {
     public cwd:string;
     public commentSignatureRegex:RegExp;
     public store:string[];
@@ -107,12 +95,12 @@ class taskTracker{
 
     public async searchTasksInCB():Promise<void>{
         try{
-            CLIExecutor.logProgress('searchingTasksInCB started ...', 'working');
+            Scaffolder.logProgress('searchingTasksInCB started ...', 'working');
             // await this.deleteTasksFromStore();
             const entryPointToUse = process.cwd();
-            const files = await taskTracker.traverseDirTree(entryPointToUse,{result:true}) as string[];
+            const files = await TasksHandler.traverseDirTree(entryPointToUse,{result:true}) as string[];
             for(const file of files){
-                const fileContent = await taskTracker.readOperations(file, {stream:false}) as string;
+                const fileContent = await TasksHandler.readOperations(file, {stream:false}) as string;
                 const commentMatchArray = fileContent.match(this.commentSignatureRegex) as RegExpMatchArray;
                 if(commentMatchArray === null){
                     continue;
@@ -124,7 +112,7 @@ class taskTracker{
                 })
                 this.store.push(...todoItemsMod);
             }
-            CLIExecutor.logProgress("tasks found", 'success');
+            Scaffolder.logProgress("tasks found", 'success');
             await this.storeTasks(this.tasksLocation);
         }
         catch(err){
@@ -134,7 +122,7 @@ class taskTracker{
     };
     private async storeTasks(location:string):Promise<{success:boolean}>{
         try{
-            CLIExecutor.logProgress('storing tasks has begun', 'working')
+            Scaffolder.logProgress('storing tasks has begun', 'working')
             const dataToBeStored:StoreStructure = {
                 data:this.store,
                 lastModified:new Date(),
@@ -142,8 +130,8 @@ class taskTracker{
 
             }
             const json = JSON.stringify(dataToBeStored);
-            await taskTracker.writeOperations(this.tasksLocation,json,{stream:false});
-            CLIExecutor.logProgress('storing tasks complete', 'success');
+            await TasksHandler.writeOperations(this.tasksLocation,json,{stream:false});
+            Scaffolder.logProgress('storing tasks complete', 'success');
             return {success:true}
         }
         catch(err){
@@ -176,12 +164,12 @@ class taskTracker{
 
     public async getTasksToDisplay(options?:{display:boolean}):Promise<string[] | null | void>{
         try{
-            CLIExecutor.logProgress('started getting tasks to display', 'working');
-            const storedContent = await taskTracker.readOperations(this.tasksLocation, {stream:false}) as string;
+            Scaffolder.logProgress('started getting tasks to display', 'working');
+            const storedContent = await TasksHandler.readOperations(this.tasksLocation, {stream:false}) as string;
             const tasksArray = JSON.parse(storedContent) as StoreStructure;
             const data = tasksArray.data;
             if(options?.display === true){
-                taskTracker.display(data);
+                TasksHandler.display(data);
                 return
             }
             return data;
@@ -196,23 +184,23 @@ class taskTracker{
 
     public async shakeTree(options?:{doneTasksOnly:boolean}):Promise<void>{
         try{
-            CLIExecutor.logProgress('shaking Tree started', 'working')
+            Scaffolder.logProgress('shaking Tree started', 'working')
             const targetLocation= process.cwd();
-            const files =  await taskTracker.traverseDirTree(targetLocation,{result:true}) as string[];
+            const files =  await TasksHandler.traverseDirTree(targetLocation,{result:true}) as string[];
             for (const file of files){
-                const fileContent = await taskTracker.readOperations(file,{stream:false} ) as string;
+                const fileContent = await TasksHandler.readOperations(file,{stream:false} ) as string;
                 const regexToMatch:RegExp = options?.doneTasksOnly === true ? this.doneTasksRegex : this.commentSignatureRegex;
                 const matches = fileContent.match(regexToMatch);
                 if(matches == null){
                     continue;
                 }
                 const newFileContent = fileContent.replace(regexToMatch, '');
-                await taskTracker.writeOperations(file, newFileContent, {stream:false});
+                await TasksHandler.writeOperations(file, newFileContent, {stream:false});
 
             }
             await this.deleteTasksFromStore();
 
-            CLIExecutor.logProgress('tree shake complete', 'success');
+            Scaffolder.logProgress('tree shake complete', 'success');
 
         }
         catch(err){
@@ -227,12 +215,12 @@ class taskTracker{
              const dirItems = await fs.promises.readdir(treeLocation, {encoding:"utf-8"});
              for(const dirItem of dirItems){
                  const dirItemPath = path.resolve(treeLocation, dirItem);
-                 const isSupportedFile = await taskTracker.isSupportedFile(dirItemPath);
+                 const isSupportedFile = await TasksHandler.isSupportedFile(dirItemPath);
                  const isDir = (await fs.promises.stat(dirItemPath)).isDirectory()
                  if(isSupportedFile){
                      arraysToReturn.push(dirItemPath)
                  }else if(isDir) {
-                     const items = await taskTracker.traverseDirTree(dirItemPath, {result: true}) as string[];
+                     const items = await TasksHandler.traverseDirTree(dirItemPath, {result: true}) as string[];
                      arraysToReturn.push(...items);
                  }
 
@@ -259,14 +247,14 @@ class taskTracker{
 
     public async deleteTasksFromStore():Promise<void>{
         try{
-            CLIExecutor.logProgress('deleting tasks...', "working");
+            Scaffolder.logProgress('deleting tasks...', "working");
             const data = JSON.stringify({
                 data:[],
                 lastModified:null,
                 matchedFiles:[]
             } as StoreStructure)
-            await taskTracker.writeOperations(this.tasksLocation,data, {stream:false})
-            CLIExecutor.logProgress('deleting tasks complete', 'success');
+            await TasksHandler.writeOperations(this.tasksLocation,data, {stream:false})
+            Scaffolder.logProgress('deleting tasks complete', 'success');
         }
         catch(err){
             const message = 'an error occurred while deleting tasks from store';
@@ -284,7 +272,7 @@ class taskTracker{
         const lowPColour:ForegroundColorName = 'greenBright';
 
 
-        const sortedTasks = taskTracker.priorityTaskSort(tasks);
+        const sortedTasks = TasksHandler.priorityTaskSort(tasks);
         let assignedTaskNumber = 1;
 
         for(let key in sortedTasks){
@@ -350,17 +338,16 @@ class taskTracker{
         files.forEach((file)=>{
             mergedFileLocations.add(file)
         })
-        console.log(Array.from(mergedFileLocations))
         return Array.from(mergedFileLocations);
     }
-    private async quickStats():Promise<quickStats | null>{
+    public async quickStats():Promise<quickStats | null>{
         try{
             interface quickStats{
                 matchedFiles:string[],
                 totalTasks:number,
 
             }
-            const json = await taskTracker.readOperations(this.tasksLocation, {stream:false}) as string;
+            const json = await TasksHandler.readOperations(this.tasksLocation, {stream:false}) as string;
             const object = JSON.parse(json) as StoreStructure;
             const matchedFiles = object.matchedFiles, totalTasks = object.data.length;
             return {matchedFiles, totalTasks}
@@ -375,4 +362,4 @@ class taskTracker{
     }
 }
 
-export default taskTracker;
+export default TasksHandler;

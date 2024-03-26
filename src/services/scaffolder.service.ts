@@ -5,19 +5,15 @@ import {exec} from "node:child_process";
 import chalk, {BackgroundColorName, ForegroundColorName} from 'chalk'
 import {fileURLToPath} from "node:url";
 import packageJson from '../../package.json';
+
+const allowedProjectFileExtension:string[] = ['.js', '.ts', '.tsx', '.jsx', '.json', '.css', '.html','.ejs' ] as const;
+
 /*
-
-->add functionality to watch files with tasks comment and trigger events on changes
------>refactor some minor code
-->add functionality to watch files with tasks comment and trigger events on changes
-->refactor some minor code
---->add functionality to watch files with tasks comment and trigger events on changes
-->refactor some minor code
------->add functionality to watch files with tasks comment and trigger events on changes
----->refactor some minor code
-
+---------->refactor quickTree method to have functionality to create files and folders within same cli argument. Enable creating folders and files inside the created folders. use '|' as pipe operator to show items inside the folder
+----->add functionality to refactor names of created files or folders
 
 */
+
 
 
 
@@ -67,7 +63,7 @@ interface Executables{
 
 
 
-class CLIExecutor{
+class Scaffolder {
     private projectSrcPath : string;
     public userProjectName : string;
     public projectRootPath : string;
@@ -152,12 +148,12 @@ class CLIExecutor{
 
     public async buildProject(chosenProject:Project, preferredProjName:string):Promise<void>{
         try{
-            CLIExecutor.logProgress('building project started', 'working');
+            Scaffolder.logProgress('building project started', 'working');
 
             this.userProjectName = preferredProjName;
             this.projectRootPath = path.resolve(process.cwd(), preferredProjName);
 
-            await CLIExecutor.buildProjectFolder(preferredProjName);
+            await Scaffolder.buildProjectFolder(preferredProjName);
             interface commands{
                 normalInstall:string,
                 devInstall:string,
@@ -170,7 +166,7 @@ class CLIExecutor{
                 viteInstall:[`npm create vite@latest create ${preferredProjName} --template react`]
             } as const;
             if(chosenProject === "react"){
-                await CLIExecutor.executeCommands(commands.viteInstall);
+                await Scaffolder.executeCommands(commands.viteInstall);
                 return
             }
             if(!projectTypes.includes(chosenProject)){
@@ -184,13 +180,13 @@ class CLIExecutor{
 
                 return `${commandType} ${command}`;
             });
-            await CLIExecutor.executeCommands([npm as string, ...mergedCommandsToExecute]);
+            await Scaffolder.executeCommands([npm as string, ...mergedCommandsToExecute]);
 
             // add required project templates configuration
             const configsToBeCreated = configsToInstall[chosenProject];
             console.log(configsToBeCreated)
             for(const currentConfig of configsToBeCreated){
-                await CLIExecutor.createConfigsIntoproject(currentConfig,this.projectRootPath );
+                await Scaffolder.createConfigsIntoproject(currentConfig,this.projectRootPath );
                 console.log(currentConfig);
 
             };
@@ -214,7 +210,7 @@ class CLIExecutor{
             await fs.promises.mkdir(pathToUse, {recursive:false});
             const pathToNavigateTo = path.resolve(process.cwd(),projectName );
             process.chdir(pathToNavigateTo);
-            CLIExecutor.logProgress('building project Folder success', 'success' );
+            Scaffolder.logProgress('building project Folder success', 'success' );
 
         }
         catch(err){
@@ -227,7 +223,10 @@ class CLIExecutor{
     public async quickTree(items:string[],fileType:'dir' | 'file'):Promise<void>{
 
         try{
-            CLIExecutor.logProgress('building quick tree...', "working");
+            Scaffolder.logProgress('building quick tree...', "working");
+            console.log('items for quickTree are', items);
+
+
 
 
             for(const item of items){
@@ -239,8 +238,7 @@ class CLIExecutor{
                     await fs.promises.writeFile(pathToUse, '', {encoding:'utf-8'});
                 }
             }
-            console.log('making quick tree is a success');
-            CLIExecutor.logProgress('building quick tree complete', 'success');
+            Scaffolder.logProgress('building quick tree complete', 'success');
         }
         catch(err){
             const message = 'an error occurred while making quickTree';
@@ -304,4 +302,4 @@ class CLIExecutor{
 
 }
 
-export default CLIExecutor
+export default Scaffolder

@@ -1,31 +1,20 @@
 import {Command} from 'commander';
-import CLIExecutor, {Project} from "./CLIExecutor.service.js";
+import Scaffolder, {Project} from "./scaffolder.service.js";
 import rawlist from '@inquirer/rawlist';
 import {input} from "@inquirer/prompts";
-import taskTracker from "./taskTracker.service.js";
+import TasksHandler from "./tasksHandler.service.js";
 import ProcessTimer from "../utils/processTimer.util.js";
-/*
+import chalk from "chalk";
 
 
 
-->add functionality to watch files with tasks comment and trigger events on changes
-->refactor some minor code
---->add functionality to watch files with tasks comment and trigger events on changes
-->refactor some minor code
------->add functionality to watch files with tasks comment and trigger events on changes
----->refactor some minor code
 
-
-*/
-
-
-
-class CLIInterface{
+class cmd {
     private program :Command;
     private programVersion: string;
     private programDescription: string;
-    private commandsExecutorClass:CLIExecutor;
-    private taskTrackerClass:taskTracker;
+    private commandsExecutorClass:Scaffolder;
+    private taskTrackerClass:TasksHandler;
     public projectName:string;
     public projectPath : string;
 
@@ -34,13 +23,13 @@ class CLIInterface{
         this.programVersion = '1.0.0';
         this.programDescription = 'interface for blitz_forge scaffolding tool and inline task manager';
         this.projectName = '';
-        this.commandsExecutorClass = new CLIExecutor(this.projectName);
+        this.commandsExecutorClass = new Scaffolder(this.projectName);
         this.projectPath = '';
-        this.taskTrackerClass = new taskTracker();
+        this.taskTrackerClass = new TasksHandler();
     }
     public async configureCommands():Promise<void>{
         try{
-            console.log('started configuring commands')
+            Scaffolder.logProgress('configuring commands...', 'working');
             this.program
                 .version(this.programVersion)
                 .description(this.programDescription);
@@ -61,7 +50,7 @@ class CLIInterface{
 
         try{
             this.program
-                .command('proj')
+                .command('project')
                 .argument('[projectName]', 'name of the project being created')
                 .argument('[projectType]', 'name of the type of project that the user intends to scaffold')
                 .option('-i, --init', 'initialize with a guided setup')
@@ -103,21 +92,22 @@ class CLIInterface{
     public async buildTree():Promise<void>{
         try{
             this.program
-                .command('arch')
+                .command('tree')
                 .argument('<load...>', 'folders to create in src')
                 .option('-f, --file', 'specifies file type')
                 .option('-d, --dir', 'specifies directory type')
                 .action(async (load,options):Promise<void>=>{
+                    const session = new ProcessTimer();
                     if(options.file !== true && options.dir !== true){
                         new ProcessTimer()
                         console.log('type flag was not specified');
+                        session.done();
                         return;
                     }
-                    new ProcessTimer()
-
                     const fileType = options.file ? 'file' : 'dir';
 
                     await this.commandsExecutorClass.quickTree(load,fileType);
+                    session.done()
                 })
 
         }
@@ -133,6 +123,7 @@ class CLIInterface{
             .option('-g --get', 'get tasks in store')
             .option('-rm --remove', 'remove tasks from store')
             .option('-sd --shakedone', 'shake tree to remove tasks marked as already done')
+            .option('-qs, --quickstats', 'get a quick overview of pending project tasks')
             .action(async(options)=>{
                 const manageProcessSession = new ProcessTimer();
                 if(options.build){
@@ -141,6 +132,11 @@ class CLIInterface{
                     await this.taskTrackerClass.getTasksToDisplay({display:true});
                     manageProcessSession.done()
                     return
+
+                }
+                if(options.quickstats){
+                    const items = await this.taskTrackerClass.quickStats();
+                    console.log(items);
 
                 }
                 if(options.shake){
@@ -175,4 +171,4 @@ class CLIInterface{
 
 }
 
-export default CLIInterface;
+export default cmd;

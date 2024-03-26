@@ -1,5 +1,5 @@
 #!/usr/bin/env node
 
 
-import CLIInterface from "./services/CLIInterface.service.js";
-await new CLIInterface().configureCommands();
+import cmd from "./services/cmd.service.js";
+await new cmd().configureCommands();
