@@ -8,13 +8,14 @@ import terminalLink from 'terminal-link';
 interface StoreStructure{
     data:string[];
     lastModified:Date | null;
+    matchedFiles:[];
 }
 interface ReturnPs {
     highP:string[],
     moderateP:string[],
     lowP:string[]
 }
-const pathToTaskFile = 'file:'
+const fileDelim = 'file:'
 class taskTracker{
     public cwd:string;
     public commentSignatureRegex:RegExp;
@@ -107,7 +108,7 @@ class taskTracker{
                 }
                 const todoItems = commentMatchArray[0].match(this.bulletsSignatureRegex) as RegExpMatchArray;
                 const todoItemsMod = todoItems.map((item)=>{
-                    return item.concat(`  ${pathToTaskFile} ${file}`);
+                    return item.concat(`  ${fileDelim} ${file}`);
 
                 })
                 this.store.push(...todoItemsMod);
@@ -286,7 +287,7 @@ class taskTracker{
            }
            const  sortedTask = sortedTasks[key as keyof ReturnPs];
            sortedTask.forEach((task, i)=>{
-               const filePath = task.split(pathToTaskFile);
+               const filePath = task.split(fileDelim);
                const relativePath = path.relative(process.cwd(), filePath[1]);
                const filePathAsLink = chalk["bgWhiteBright"](terminalLink('file',relativePath ));
                const newTask = `${filePath[0].toUpperCase()} ${filePathAsLink}`;
@@ -299,11 +300,6 @@ class taskTracker{
 
 
         }
-
-
-
-
-
     }
 
     static priorityTaskSort(tasksArray:string[]):ReturnPs{
@@ -332,6 +328,20 @@ class taskTracker{
         return {highP, moderateP , lowP};
 
 
+    }
+
+    public async watchFiles(){
+
+    }
+    private retrieveFiles():string[]{
+        const files = this.store.map((item)=>{
+            return item.split(fileDelim)[1].trim();
+        })
+        const  mergedFileLocations:Set<string> = new Set();
+        files.forEach((file)=>{
+            mergedFileLocations.add(file)
+        })
+        return Array.from(mergedFileLocations);
     }
 
 
