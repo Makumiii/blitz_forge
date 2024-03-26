@@ -28,7 +28,7 @@ class taskTracker{
     public doneTasksRegex:RegExp;
     constructor(){
         this.cwd = process.cwd();
-        this.commentSignatureRegex =  /\/\*\s*((\n+-+>\s?\S?.*\s?)+)\s*\*\//gm;
+        this.commentSignatureRegex =  /\/\*\s*(\n?-+>\s?\S?.*\s*)+\s*\*\//gm;
         this.bulletsSignatureRegex = /-+!?>\s*\S*.*/gm;
         this.store = [];
         this.codeBaseLocation = path.resolve(this.cwd, 'src');
@@ -36,7 +36,7 @@ class taskTracker{
         this.tasksLocation = path.resolve(this.__dirName,'..', '..', 'userData', 'tasks.data.json');
         // this.storeTasksEvent = new EventEmitter();
         // this.storeTasksEvent.on('storeTasks',()=>this.storeTasksHandler(this.tasksLocation));
-        this.doneTasksRegex = /-+!>\s*\S*.*\n*/g;
+        this.doneTasksRegex = /-+!>\s*\S*.*\n*/gm;
 
 
 
@@ -64,7 +64,6 @@ class taskTracker{
             const streamable = options?.stream === true;
             if(!streamable){
 
-                console.log('the data is :', data);
                 await fs.promises.writeFile(writePath,data,{encoding:"utf-8"});
                 return;
             }
@@ -107,18 +106,14 @@ class taskTracker{
                     continue;
                 }
                 const todoItems = commentMatchArray[0].match(this.bulletsSignatureRegex) as RegExpMatchArray;
-                console.log(todoItems);
                 const todoItemsMod = todoItems.map((item)=>{
                     return item.concat(`  ${pathToTaskFile} ${file}`);
 
                 })
-                console.log('todo items mod:',todoItemsMod)
-
-
                 this.store.push(...todoItemsMod);
             }
+            CLIExecutor.logProgress("tasks found", 'success');
             await this.storeTasks(this.tasksLocation);
-            CLIExecutor.logProgress('storing tasks done', 'success');
         }
         catch(err){
             const message = 'an error occurred while getting tasks from src files';
@@ -127,17 +122,15 @@ class taskTracker{
     };
     private async storeTasks(location:string):Promise<{success:boolean}>{
         try{
-            console.log('storing events has begun');
-            console.log('store value in storeTasksHandler:', this.store);
+            CLIExecutor.logProgress('storing tasks has begun', 'working')
             const dataToBeStored:StoreStructure = {
                 data:this.store,
                 lastModified:new Date()
 
             }
             const json = JSON.stringify(dataToBeStored);
-            console.log('json',json);
-            console.log(this.tasksLocation)
-            await fs.promises.writeFile(this.tasksLocation,json,{encoding:"utf-8"});
+            await taskTracker.writeOperations(this.tasksLocation,json,{stream:false});
+            CLIExecutor.logProgress('storing tasks complete', 'success');
             return {success:true}
         }
         catch(err){
@@ -253,7 +246,12 @@ class taskTracker{
 
     public async deleteTasksFromStore():Promise<void>{
         try{
-            CLIExecutor.logProgress('deleting tasks...', "working")
+            CLIExecutor.logProgress('deleting tasks...', "working");
+            const data = JSON.stringify({
+                data:[],
+                lastModified:null
+            } as StoreStructure)
+            await taskTracker.writeOperations(this.tasksLocation,data, {stream:false})
             CLIExecutor.logProgress('deleting tasks complete', 'success');
         }
         catch(err){
@@ -290,7 +288,6 @@ class taskTracker{
            sortedTask.forEach((task, i)=>{
                const filePath = task.split(pathToTaskFile);
                const relativePath = path.relative(process.cwd(), filePath[1]);
-               console.log(relativePath);
                const filePathAsLink = chalk["bgWhiteBright"](terminalLink('file',relativePath ));
                const newTask = `${filePath[0].toUpperCase()} ${filePathAsLink}`;
 
