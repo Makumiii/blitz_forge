@@ -8,18 +8,6 @@ import packageJson from '../../package.json';
 
 const allowedProjectFileExtension:string[] = ['.js', '.ts', '.tsx', '.jsx', '.json', '.css', '.html','.ejs' ] as const;
 
-/*
----------->refactor quickTree method to have functionality to create files and folders within same cli argument. Enable creating folders and files inside the created folders. use '|' as pipe operator to show items inside the folder
------>add functionality to refactor names of created files or folders
-
-*/
-
-
-
-
-
-
-
 type Temps = 'ts' | 'tailwind' | 'eslint' | 'nodemon' | 'postcss';
 export type Project = 'react' | 'node' | 'webserver' | 'cli';
 const projectTypes: Project[] = ["react", "node", "cli", "webserver"];
@@ -225,10 +213,6 @@ class Scaffolder {
         try{
             Scaffolder.logProgress('building quick tree...', "working");
             console.log('items for quickTree are', items);
-
-
-
-
             for(const item of items){
                 const pathToUse = path.resolve(process.cwd(), item);
                 if(fileType === "dir"){
