@@ -13,6 +13,10 @@
 
 `https://github.com/Makumiii/blitz_forge.git`
 
+###### install deps
+
+`npm install`
+
 ###### build src
 
 ```npm run build```
@@ -21,6 +25,8 @@
 ###### link project
 
 `npm link [projectName]`
+
+
 
 ## *usage* 
 
