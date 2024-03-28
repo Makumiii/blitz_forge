@@ -1,4 +1,3 @@
-import select, {Separator} from '@inquirer/select'
 import * as path from "node:path";
 import * as fs from "fs";
 import {exec} from "node:child_process";
@@ -259,7 +258,7 @@ class Scaffolder {
             //read package.json in user project root
             const packageJsonCont = JSON.parse(await fs.promises.readFile(pathToFile, {encoding:"utf-8"}));
             // add scripts to scripts prop
-            interface ScriptsToAdd extends Partial<typeof packageJson.scripts>{};
+            interface ScriptsToAdd extends Partial<typeof packageJson.scripts>{}
 
             const scriptsToAddToJson : ScriptsToAdd = {
 
@@ -276,7 +275,7 @@ class Scaffolder {
 
 
         }catch(err){
-            const message = 'an error occured while adding scripts to package json';
+            const message = 'an error occurred while adding scripts to package json';
             console.error(message, err);
         }
 
