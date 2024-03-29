@@ -11,7 +11,7 @@
 
 ###### clone project
 
-`https://github.com/Makumiii/blitz_forge.git`
+`git clone https://github.com/Makumiii/blitz_forge.git`
 
 ###### install deps
 
