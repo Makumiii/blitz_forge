@@ -96,13 +96,17 @@ class cmd {
                 .argument('<load...>', 'folders to create in src')
                 .option('-f, --file', 'specifies file type')
                 .option('-d, --dir', 'specifies directory type')
+                .option('-n --nested','allow nested tree' )
                 .action(async (load,options):Promise<void>=>{
                     const session = new ProcessTimer();
-                    if(options.file !== true && options.dir !== true){
-                        new ProcessTimer()
+                    if(!options.file && !options.dir&& !options.nested){
                         console.log('type flag was not specified');
                         session.done();
                         return;
+                    }
+                    if(options.nested){
+                        await this.commandsExecutorClass.quickTree(load,undefined,{nestedArg:true});
+                        session.done()
                     }
                     const fileType = options.file ? 'file' : 'dir';
 
