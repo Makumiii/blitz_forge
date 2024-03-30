@@ -54,12 +54,14 @@ class Scaffolder {
     private projectSrcPath : string;
     public userProjectName : string;
     public projectRootPath : string;
-    public __dirName: string
+    public __dirName: string;
+    public quickTreeRegex: RegExp;
     constructor(private projectName:string){
         this.projectSrcPath = path.resolve(`${projectName}`, 'src');
         this.userProjectName = '';
         this.projectRootPath = path.resolve(process.cwd(), this.projectName);
         this.__dirName = path.dirname(fileURLToPath(import.meta.url));
+        this.quickTreeRegex = /a/;
     }
     static async createConfigsIntoproject(config:Temps, writeLocation:string):Promise<void>{
         try{
@@ -207,13 +209,35 @@ class Scaffolder {
 
     }
 
-    public async quickTree(items:string[],fileType:'dir' | 'file'):Promise<void>{
+    public async quickTree(items:string[],fileType?:'dir' | 'file', options?:{nestedArg:boolean}):Promise<void>{
 
         try{
             Scaffolder.logProgress('building quick tree...', "working");
-            console.log('items for quickTree are', items);
             for(const item of items){
+                if(options?.nestedArg === true){
+                    const splitLoad = item.split('-');
+                    if(splitLoad.length > 2){
+                        throw new Error('pattern not recognized');
+                    }
+                    const parentDir = splitLoad[0];
+                    const children = splitLoad[1];
+                    const pathToUse = path.resolve(process.cwd(), parentDir);
+                    await fs.promises.mkdir(pathToUse);
+                    const nestedItems = children.split(' ');
+                    for(const nestedItem of nestedItems){
+                        const nestedItemPath = path.resolve(pathToUse,nestedItem);
+                        const isValidFile =allowedProjectFileExtension.includes( path.extname(nestedItemPath));
+                        if(isValidFile){
+                            await fs.promises.writeFile(nestedItemPath,'',{encoding:"utf-8"})
+                        }
+                        await fs.promises.mkdir(nestedItemPath)
+                    }
+                    continue
+
+
+                }
                 const pathToUse = path.resolve(process.cwd(), item);
+
                 if(fileType === "dir"){
                     await fs.promises.mkdir(pathToUse, {recursive:false});
                 }
@@ -221,6 +245,7 @@ class Scaffolder {
                     await fs.promises.writeFile(pathToUse, '', {encoding:'utf-8'});
                 }
             }
+
             Scaffolder.logProgress('building quick tree complete', 'success');
         }
         catch(err){
