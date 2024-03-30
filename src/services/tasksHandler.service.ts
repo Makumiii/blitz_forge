@@ -383,7 +383,7 @@ class TasksHandler {
                 if(cutAtIndex === -1){
                     throw new Error('cutAt value is not contained within paths')
                 }
-                const modFile = file.substring(cutAtIndex);
+                const modFile = file.substring(cutAtIndex).replaceAll('\\','/');
                 return `+ ${todo} [${modFile}](${modFile})\n\n`
             }
             const highPCategory = sortedItems.highP.map(mapCallback).join('');
