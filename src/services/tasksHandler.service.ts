@@ -4,6 +4,10 @@ import {fileURLToPath} from "node:url";
 import Scaffolder from "./scaffolder.service.js";
 import chalk, {ForegroundColorName} from "chalk";
 import terminalLink from 'terminal-link';
+/*
+->add single line tasks alongside multiple multi line tasks comment.
+
+ */
 
 
 interface StoreStructure{

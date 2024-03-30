@@ -232,18 +232,18 @@ class Scaffolder {
     static logProgress(logMessage:string, logType:'err' | 'success'| 'working',color?:ForegroundColorName ):void{
         if(logType !== "err" && logType !== "success" && logType !== 'working'){
             console.error('logType is not valid');
-        };
+        }
 
         let logColour: ForegroundColorName = 'blueBright';
         if(logType === 'success'){
             logColour = 'greenBright';
-        };
+        }
         if(logType === 'err'){
             logColour = 'redBright';
-        };
+        }
         if(logType === 'working'){
             logColour = 'yellowBright'
-        };
+        }
         if(color !== undefined){
             logColour = color;
         }
