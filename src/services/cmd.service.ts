@@ -128,6 +128,7 @@ class cmd {
             .option('-rm --remove', 'remove tasks from store')
             .option('-sd --shakedone', 'shake tree to remove tasks marked as already done')
             .option('-qs, --quickstats', 'get a quick overview of pending project tasks')
+            .option('-md --markdown <cutAt>', 'save tasks to markdown')
             .action(async(options)=>{
                 const manageProcessSession = new ProcessTimer();
                 if(options.build){
@@ -137,6 +138,14 @@ class cmd {
                     manageProcessSession.done()
                     return
 
+                }
+                if(options.markdown){
+                    const cutAtValue = options.markdown;
+                    if(cutAtValue === undefined){
+                        throw new Error('cutAt value not present in command');
+                    }
+                    await this.taskTrackerClass.saveToMd(cutAtValue);
+                    manageProcessSession.done()
                 }
                 if(options.quickstats){
                     const items = await this.taskTrackerClass.quickStats();

@@ -4,8 +4,12 @@ import {fileURLToPath} from "node:url";
 import Scaffolder from "./scaffolder.service.js";
 import chalk, {ForegroundColorName} from "chalk";
 import terminalLink from 'terminal-link';
+
 /*
 ->add single line tasks alongside multiple multi line tasks comment.
+---->test to see if application works well with the new features rolled out
+------------->fix react not scaffolding issue
+--------------------->fix hidden running unknown operation running when scaffolding any project
 
  */
 
@@ -35,6 +39,7 @@ class TasksHandler {
     readonly __dirName:string;
     readonly tasksLocation:string;
     public doneTasksRegex:RegExp;
+    public markdownLocation:string;
     constructor(){
         this.cwd = process.cwd();
         this.commentSignatureRegex =  /\/\*\s*(\n?-+!?>\s?\S?.*\s*)+\s*\*\//gm;
@@ -44,6 +49,7 @@ class TasksHandler {
         this.__dirName = path.dirname(fileURLToPath(import.meta.url))
         this.tasksLocation = path.resolve(this.__dirName,'..', '..', 'userData', 'tasks.data.json');
         this.doneTasksRegex = /-+!>\s*\S*.*/gm;
+        this.markdownLocation = path.resolve(this.__dirName, '..','..','TODOS.blitz.md');
     }
 
     static async readOperations(pathToFile:string, option?:{stream:boolean}):Promise<string | null | fs.ReadStream>{
@@ -363,6 +369,35 @@ class TasksHandler {
             return null
 
         }
+    }
+
+    public async saveToMd(cutAt:string){
+        try {
+            Scaffolder.logProgress('saving tasks to markdown started...', 'working');
+            const todoItems = await this.getTasksToDisplay() as string[];
+            const sortedItems = TasksHandler.priorityTaskSort(todoItems);
+            function mapCallback(item:string):string{
+                const [,main] = item.split('>');
+                const [todo,file] = main.split(fileDelim)
+                const cutAtIndex = file.indexOf(cutAt);
+                if(cutAtIndex === -1){
+                    throw new Error('cutAt value is not contained within paths')
+                }
+                const modFile = file.substring(cutAtIndex);
+                return `+ ${todo} \`${modFile}\`\n\n`
+            }
+            const highPCategory = sortedItems.highP.map(mapCallback).join('');
+            const moderateCategory = sortedItems.moderateP.map(mapCallback).join('');
+            const lowPCategory = sortedItems.lowP.map(mapCallback).join('');
+            const mergedMd = `## ***HIGH PRIORITY***\n\n${highPCategory}## ***MODERATE PRIORITY***\n\n${moderateCategory}## ***LOW PRIORITY***\n\n${lowPCategory}`;
+            await TasksHandler.writeOperations(this.markdownLocation,mergedMd,{stream:false});
+            Scaffolder.logProgress('saving to markdown successful', 'success');
+        }
+        catch(err){
+            const message = 'an error occurred while saving items to markdown';
+            console.error(message, err);
+        }
+
     }
 }
 
