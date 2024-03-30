@@ -141,6 +141,7 @@ class TasksHandler {
             }
             const json = JSON.stringify(dataToBeStored);
             await TasksHandler.writeOperations(this.tasksLocation,json,{stream:false});
+            await this.saveToMd('src')
             Scaffolder.logProgress('storing tasks complete', 'success');
             return {success:true}
         }
