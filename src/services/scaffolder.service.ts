@@ -4,6 +4,7 @@ import {exec} from "node:child_process";
 import chalk, {BackgroundColorName, ForegroundColorName} from 'chalk'
 import {fileURLToPath} from "node:url";
 import packageJson from '../../package.json';
+import {promisify} from "node:util";
 
 const allowedProjectFileExtension:string[] = ['.js', '.ts', '.tsx', '.jsx', '.json', '.css', '.html','.ejs' ] as const;
 
@@ -23,15 +24,15 @@ const configsExt:configsExt = {
     ts : {name:'tsconfig', ext:'.json'},
     nodemon:{name:'nodemon', ext:'.json'}
 } as const;
-const commonInstallationPackages : string[] = ['typescript'];
+const commonInstallationPackages : string[] = ['typescript', 'nodemon -D', 'ts-node -D'];
 interface Response<T> {
     success:boolean,
     data?:T
-};
+}
 const packagesToInstall : {[key in Project]:string[]} = {
     cli:['commander', 'inquirer', 'chalk', ...commonInstallationPackages],
     node:[...commonInstallationPackages],
-    react:['vite', 'tailwind -D', 'postcss -D', 'autoprefixer -D',...commonInstallationPackages],
+    react:['vite','react','react-dom', 'tailwind -D', 'postcss -D', 'autoprefixer -D',...commonInstallationPackages],
     webserver:['express', 'cors', 'axios', ...commonInstallationPackages],
 } as const
 
@@ -63,8 +64,9 @@ class Scaffolder {
         this.__dirName = path.dirname(fileURLToPath(import.meta.url));
         this.quickTreeRegex = /a/;
     }
-    static async createConfigsIntoproject(config:Temps, writeLocation:string):Promise<void>{
+    static async createConfigsIntoProject(config:Temps, writeLocation:string):Promise<void>{
         try{
+            Scaffolder.logProgress('copying configs into project', 'working');
             const fileName = configsExt[config].name + configsExt[config].ext;
             const defaultTempsLocation = path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..','..',  'temps' ,'default',);
             const defaultConfigs = await fs.promises.readdir(defaultTempsLocation, {encoding:'utf-8'});
@@ -76,8 +78,9 @@ class Scaffolder {
                     const file = await fs.promises.readFile(configPath, 'utf-8');
                     const newWriteLocation = path.resolve(writeLocation, fileName);
                     await fs.promises.writeFile(newWriteLocation,file);
+                    Scaffolder.logProgress('writing config done', 'success')
                     return;
-                };
+                }
                 throw new Error('template is not a valid file');
 
             }
@@ -101,29 +104,27 @@ class Scaffolder {
             let commandsStore: string[] = [];
             if(typeof command === "string"){
                 commandsStore.push(command as string)
+            }else{
+                commandsStore = commandsStore.concat(command as string[])
             }
-            commandsStore = commandsStore.concat(command as string[])
+            console.log('commandStore', commandsStore);
 
             for(const command of commandsStore){
+                Scaffolder.logProgress(`executing: ${command}`, 'working');
+                const execPromise = promisify(exec);
+                const {stderr, stdout} = await execPromise(command)
+                if(stderr){
+                    console.log('an error occurred while executing commands', stderr)
+                }
+                if(stdout){
+                    console.log(stdout)
+                }
 
-                await new Promise<void>((resolve, reject)=>{
-
-                    exec(command,(error, stdout, stderr) =>{
-                        const message = 'an error occurred during command execution';
-                        if(stderr || error){
-                            console.error(message,error);
-                            reject(error || stderr)
-                        }
-
-                        resolve()
-
-
-                    } )
-
-                })
+                Scaffolder.logProgress(`executing:${command} done`, 'success');
 
 
             }
+            Scaffolder.logProgress('execution of commands complete', 'success');
             return
         }
         catch(err){
@@ -146,18 +147,13 @@ class Scaffolder {
             interface commands{
                 normalInstall:string,
                 devInstall:string,
-                viteInstall:string[]
             }
-            const npm = chosenProject !== "react" ? 'npm init -y' : null;
+            const npm = 'npm init -y';
             const commands : commands = {
                 normalInstall:'npm install',
                 devInstall:'npm install -D',
-                viteInstall:[`npm create vite@latest create ${preferredProjName} --template react`]
             } as const;
-            if(chosenProject === "react"){
-                await Scaffolder.executeCommands(commands.viteInstall);
-                return
-            }
+
             if(!projectTypes.includes(chosenProject)){
                 const message = 'input project is not valid';
                 throw new Error(message);
@@ -166,19 +162,18 @@ class Scaffolder {
             const commandsToExecute = packagesToInstall[chosenProject];
             const mergedCommandsToExecute = commandsToExecute.map((command)=>{
                 const commandType = command.includes('-D') ? commands.devInstall : commands.normalInstall;
+                const newCommand = command.includes('-D') ? command.replace('-D', '').trim() : command.trim();
 
-                return `${commandType} ${command}`;
+                return `${commandType} ${newCommand}`;
             });
             await Scaffolder.executeCommands([npm as string, ...mergedCommandsToExecute]);
 
             // add required project templates configuration
             const configsToBeCreated = configsToInstall[chosenProject];
-            console.log(configsToBeCreated)
             for(const currentConfig of configsToBeCreated){
-                await Scaffolder.createConfigsIntoproject(currentConfig,this.projectRootPath );
-                console.log(currentConfig);
+                await Scaffolder.createConfigsIntoProject(currentConfig,this.projectRootPath );
 
-            };
+            }
             //add scripts to build ts and run nodemon to package.json
             await this.addScriptsToPackageJson();
 
@@ -255,6 +250,7 @@ class Scaffolder {
     }
 
     static logProgress(logMessage:string, logType:'err' | 'success'| 'working',color?:ForegroundColorName ):void{
+        console.clear()
         if(logType !== "err" && logType !== "success" && logType !== 'working'){
             console.error('logType is not valid');
         }
