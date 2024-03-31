@@ -55,6 +55,7 @@ class cmd {
                 .argument('[projectType]', 'name of the type of project that the user intends to scaffold')
                 .option('-i, --init', 'initialize with a guided setup')
                 .action(async (projectName, projectType, options):Promise<void>=>{
+                    const manageSession = new ProcessTimer();
                     this.projectName = projectName;
                     if(options.init){
                         // first step: get project name
@@ -73,11 +74,13 @@ class cmd {
                             ]
                         });
                         await this.commandsExecutorClass.buildProject(userChosenProject as Project, userInputProjectName);
+                        manageSession.done()
                         return;
 
 
                     }
                     await this.commandsExecutorClass.buildProject(projectType, projectName);
+                    manageSession.done()
 
                 })
 
