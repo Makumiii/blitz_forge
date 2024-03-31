@@ -4,10 +4,6 @@ import {fileURLToPath} from "node:url";
 import Scaffolder from "./scaffolder.service.js";
 import chalk, {ForegroundColorName} from "chalk";
 import terminalLink from 'terminal-link';
-
-
-
-
 interface StoreStructure{
     data:string[];
     lastModified:Date | null;
@@ -204,6 +200,7 @@ class TasksHandler {
 
             }
             await this.deleteTasksFromStore();
+            await this.searchTasksInCB();
 
             Scaffolder.logProgress('tree shake complete', 'success');
 
