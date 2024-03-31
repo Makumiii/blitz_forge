@@ -5,13 +5,7 @@ import Scaffolder from "./scaffolder.service.js";
 import chalk, {ForegroundColorName} from "chalk";
 import terminalLink from 'terminal-link';
 
-/*
-->add single line tasks alongside multiple multi line tasks comment.
----->test to see if application works well with the new features rolled out
-------------->fix react not scaffolding issue
---------------------->fix hidden running unknown operation running when scaffolding any project
 
- */
 
 
 interface StoreStructure{
