@@ -1,6 +1,6 @@
 import chalk, {ForegroundColorName} from "chalk";
 import EventEmitter from 'events';
-const timeOutTime = 2;
+const timeOutTime = 5;
 class ProcessTimer{
     public elapsedTime : number;
     public timeNow : Date;
