@@ -1,6 +1,6 @@
 import chalk, {ForegroundColorName} from "chalk";
 import EventEmitter from 'events';
-const timeOutTime = 0.5;
+const timeOutTime = 2;
 
 
 
