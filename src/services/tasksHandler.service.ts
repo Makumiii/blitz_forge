@@ -4,6 +4,11 @@ import {fileURLToPath} from "node:url";
 import Scaffolder from "./scaffolder.service.js";
 import chalk, {ForegroundColorName} from "chalk";
 import terminalLink from 'terminal-link';
+
+/*
+->add single comment todos alongside existing multi-line comment todos
+--------------->refactor functionality for saving todos to md file so that it is saved in specified project dir and not the applications dir
+ */
 interface StoreStructure{
     data:string[];
     lastModified:Date | null;
@@ -40,6 +45,7 @@ class TasksHandler {
         this.tasksLocation = path.resolve(this.__dirName,'..', '..', 'userData', 'tasks.data.json');
         this.doneTasksRegex = /-+!>\s*\S*.*/gm;
         this.markdownLocation = path.resolve(this.__dirName, '..','..','TODOS.blitz.md');
+
     }
 
     static async readOperations(pathToFile:string, option?:{stream:boolean}):Promise<string | null | fs.ReadStream>{
@@ -90,7 +96,7 @@ class TasksHandler {
             return {done:false};
         }
 
-    }
+    };
 
 
     public async searchTasksInCB():Promise<void>{
@@ -363,7 +369,7 @@ class TasksHandler {
         }
     }
 
-    public async saveToMd(cutAt:string){
+    public async saveToMd(cutAt:string, mdLocation?:string){
         try {
             Scaffolder.logProgress('saving tasks to markdown started...', 'working');
             const todoItems = await this.getTasksToDisplay() as string[];
@@ -378,11 +384,13 @@ class TasksHandler {
                 const modFile = file.substring(cutAtIndex).replaceAll('\\','/');
                 return `+ ${todo} [${modFile}](${modFile})\n\n`
             }
+
             const highPCategory = sortedItems.highP.map(mapCallback).join('');
             const moderateCategory = sortedItems.moderateP.map(mapCallback).join('');
             const lowPCategory = sortedItems.lowP.map(mapCallback).join('');
+            const locationToBeUsed = mdLocation !== undefined  ? mdLocation : this.markdownLocation;
             const mergedMd = `## ***HIGH PRIORITY***\n\n${highPCategory}## ***MODERATE PRIORITY***\n\n${moderateCategory}## ***LOW PRIORITY***\n\n${lowPCategory}`;
-            await TasksHandler.writeOperations(this.markdownLocation,mergedMd,{stream:false});
+            await TasksHandler.writeOperations(locationToBeUsed,mergedMd,{stream:false});
             Scaffolder.logProgress('saving to markdown successful', 'success');
         }
         catch(err){
