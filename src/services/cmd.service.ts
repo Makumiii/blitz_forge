@@ -9,6 +9,7 @@ import chalk from "chalk";
 
 
 
+
 class cmd {
     private program :Command;
     private programVersion: string;
@@ -130,7 +131,7 @@ class cmd {
             .option('-g --get', 'get tasks in store')
             .option('-rm --remove', 'remove tasks from store')
             .option('-sd --shakedone', 'shake tree to remove tasks marked as already done')
-            .option('-qs, --quickstats', 'get a quick overview of pending project tasks')
+            .option('-qs --quickstats', 'get a quick overview of pending project tasks')
             .option('-md --markdown <cutAt>', 'save tasks to markdown')
             .action(async(options)=>{
                 const manageProcessSession = new ProcessTimer();
@@ -144,6 +145,7 @@ class cmd {
                 }
                 if(options.markdown){
                     const cutAtValue = options.markdown;
+                    //cut at value defines the
                     if(cutAtValue === undefined){
                         throw new Error('cutAt value not present in command');
                     }
